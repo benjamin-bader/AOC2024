@@ -8,36 +8,21 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
-    string line;
     vector<int> left;
     map<int, int> right_column_counts;
-    ifstream input("day01\\part2.input");
+    ifstream input("day01/part2.input");
 
-    while (getline(input, line))
+    int x, y;
+    while (input >> x >> y)
     {
-        int number1, number2;
-        sscanf(line.c_str(), "%d %d", &number1, &number2);
-
-        left.push_back(number1);
-
-        if (right_column_counts.find(number2) == right_column_counts.end())
-        {
-            right_column_counts[number2] = 1;
-        }
-        else
-        {
-            right_column_counts[number2]++;
-        }
+        left.push_back(x);
+        right_column_counts[y]++;
     }
 
     long score = 0;
     for (int n : left)
     {
-        auto it = right_column_counts.find(n);
-        if (it != right_column_counts.end())
-        {
-            score += (n * it->second);
-        }
+        score += (n * right_column_counts[n]);
     }
 
     cout << score << endl;
