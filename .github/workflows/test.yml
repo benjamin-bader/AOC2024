@@ -22,7 +22,7 @@ jobs:
 
     - name: Configure CMake
       env:
-        C: gcc-14
+        CC: gcc-14
         CXX: g++-14
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G Ninja
 
