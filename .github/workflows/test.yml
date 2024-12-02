@@ -11,16 +11,19 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # of _course_ ubuntu-latest doesn't point to the latest version
 
     steps:
 
     - name: Install deps
-      run: sudo apt-get install ninja-build
+      run: sudo apt install ninja-build
 
     - uses: actions/checkout@v4
 
     - name: Configure CMake
+      env:
+        CC: gcc-14
+        CXX: g++-14
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G Ninja
 
     - name: Build
