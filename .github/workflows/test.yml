@@ -16,17 +16,16 @@ jobs:
     steps:
 
     - name: Install deps
-      run: sudo apt-get install ninja-build
+      run: sudo apt install ninja-build g++-14
 
     - uses: actions/checkout@v4
-
-    - name: Set default compiler to g++-14
-      run: sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 90
 
     - name: Check compiler version
       run: g++ --version
 
     - name: Configure CMake
+      env:
+        CXX: g++-14
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G Ninja
 
     - name: Build
