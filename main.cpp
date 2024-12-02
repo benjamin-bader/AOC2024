@@ -1,23 +1,25 @@
 #include "base/base.h"
+
 #include "day01/day01.h"
 
 #include <functional>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <string>
 #include <utility>
 
 using namespace std;
 
-map<pair<int, int>, Problem*> solutions;
+map<pair<int, int>, shared_ptr<Problem>> solutions;
 map<pair<int, int>, string> expected_answers;
 
 template <typename P>
-void register_solution(int day, int part, P* solution)
+void register_solution(int day, int part)
 {
-    static_assert(std::derived_from<P, Problem>, "This is no problem");
+    static_assert(derived_from<P, Problem>, "This is no problem");
 
-    solutions[{day, part}] = solution;
+    solutions[{day, part}] = make_shared<P>();
     if constexpr (HasSolution<P>)
     {
         expected_answers[{day, part}] = P::expected;
@@ -26,14 +28,21 @@ void register_solution(int day, int part, P* solution)
 
 int main(int argc, char** argv)
 {
-    register_solution(1, 1, new day01::PartOne());
-    register_solution(1, 2, new day01::PartTwo());
+    register_solution<day01::PartOne>(1, 1);
+    register_solution<day01::PartTwo>(1, 2);
 
     if (argc == 3)
     {
-        int day = std::stoi(argv[1]);
-        int part = std::stoi(argv[2]);
-        std::cout << solutions[{day, part}]->solve() << std::endl;
+        int day = stoi(argv[1]);
+        int part = stoi(argv[2]);
+        pair<int, int> key = {day, part};
+        auto it = solutions.find(key);
+        if (it == solutions.end())
+        {
+            cerr << "No problem found for day " << day << " part " << part << endl;
+            return 1;
+        }
+        cout << it->second->solve() << endl;
     }
     else
     {
