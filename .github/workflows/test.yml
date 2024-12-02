@@ -11,12 +11,12 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # of _course_ ubuntu-latest doesn't point to the latest version
 
     steps:
 
     - name: Install deps
-      run: sudo apt install ninja-build g++-14
+      run: sudo apt install ninja-build
 
     - uses: actions/checkout@v4
 
