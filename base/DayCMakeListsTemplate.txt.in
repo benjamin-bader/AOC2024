@@ -1,0 +1,4 @@
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/day@NUMBER@.input" "${CMAKE_CURRENT_BINARY_DIR}/day@NUMBER@.input")
+
+add_library(day@NUMBER@ STATIC day@NUMBER@.h day@NUMBER@.cpp)
+target_link_libraries(day@NUMBER@ PRIVATE base)

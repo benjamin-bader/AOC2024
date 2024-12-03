@@ -1,0 +1,27 @@
+#include "day@NUMBER@.h"
+
+#include <string>
+
+using namespace std;
+
+namespace day@NUMBER@
+{
+
+namespace
+{
+
+constexpr const char* kInputFile = "day@NUMBER@/day@NUMBER@.input";
+
+} // namespace
+
+string PartOne::solve()
+{
+    return "TODO";
+}
+
+string PartTwo::solve()
+{
+    return "TODO";
+}
+
+} // namespace day@NUMBER@
