@@ -4,7 +4,6 @@
 #include <fstream>
 #include <iostream>
 #include <map>
-#include <numeric>
 #include <ranges>
 #include <sstream>
 #include <string>
@@ -14,59 +13,83 @@ namespace day02
 {
 
 using namespace std;
+using namespace std::string_view_literals;
+
+using Report = vector<int>;
 
 namespace
 {
 
-vector<vector<int>> read_reports()
+Report from_string(const string& s)
 {
-    vector<vector<int>> reports;
+    Report report;
+    stringstream ss(s);
+    int x;
+    while (ss >> x)
+    {
+        report.push_back(x);
+    }
+    return report;
+}
+
+vector<Report> read_reports()
+{
+    vector<Report> reports;
 
     ifstream input("day02/day02.input");
     string line;
 
     while (getline(input, line))
     {
-        stringstream ss(line);
-        vector<int> report;
-        int x;
-        while (ss >> x)
-        {
-            report.push_back(x);
-        }
-        reports.push_back(report);
+        reports.push_back(from_string(line));
     }
 
     return reports;
 }
 
-bool is_increasing(const vector<int>& xs) {
+bool is_increasing(const Report& xs)
+{
     return is_sorted(xs.begin(), xs.end());
 };
 
-bool is_decreasing(const vector<int>& xs) {
+bool is_decreasing(const Report& xs)
+{
     return is_sorted(xs.rbegin(), xs.rend());
 };
 
-bool is_ordered(const vector<int>& xs) {
+bool is_ordered(const Report& xs)
+{
     return is_increasing(xs) || is_decreasing(xs);
 };
 
-bool is_gradual(const vector<int>& nums) {
-    //auto deltas = views::iota(static_cast<size_t>(1), nums.size()) | views::transform([&](int i) { return abs(nums[i] - nums[i - 1]); });
-
-    vector<int> deltas;
-    for (size_t i = 1; i < nums.size(); i++)
+bool is_gradual(const Report& xs)
+{
+    for (size_t i = 1; i < xs.size(); ++i)
     {
-        deltas.push_back(abs(nums[i] - nums[i - 1]));
-    }
-
-    for (auto d : deltas)
-    {
-        if (d < 1 || d > 3) return false;
+        auto delta = abs(xs[i] - xs[i - 1]);
+        if (delta < 1 || delta > 3) return false;
     }
 
     return true;
+};
+
+bool is_safe(const Report& xs)
+{
+    return is_ordered(xs) && is_gradual(xs);
+};
+
+bool is_safe_with_dampener(const Report& xs)
+{
+    if (is_safe(xs)) return true;
+
+    for (size_t i = 0; i < xs.size(); i++)
+    {
+        Report modified_xs = xs;
+        modified_xs.erase(modified_xs.begin() + i);
+        if (is_safe(modified_xs)) return true;
+    }
+
+    return false;
 };
 
 } // namespace
@@ -75,7 +98,7 @@ string PartOne::solve()
 {
     auto reports = read_reports();
 
-    auto safe_reports = reports | views::filter(is_ordered) | views::filter(is_gradual);
+    auto safe_reports = reports | views::filter(is_safe);
 
     return to_string(ranges::distance(safe_reports));
 }
@@ -84,26 +107,9 @@ std::string PartTwo::solve()
 {
     auto reports = read_reports();
 
-    auto is_safe = [&](const vector<int>& report) {
-        return is_ordered(report) && is_gradual(report);
-    };
-
-    auto is_safe_with_problem_dampener = [&](const vector<int>& report) {
-        if (is_safe(report)) return true;
-
-        for (size_t i = 0; i < report.size(); i++)
-        {
-            vector<int> modified_report = report;
-            modified_report.erase(modified_report.begin() + i);
-            if (is_safe(modified_report)) return true;
-        }
-
-        return false;
-    };
-
-    auto safe_reports = reports | views::filter(is_safe_with_problem_dampener);
+    auto safe_reports = reports | views::filter(is_safe_with_dampener);
 
     return to_string(ranges::distance(safe_reports));
 }
 
-} // namespace day01
+} // namespace day02

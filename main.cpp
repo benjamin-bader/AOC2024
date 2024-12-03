@@ -15,11 +15,9 @@ using namespace std;
 map<pair<int, int>, shared_ptr<Problem>> solutions;
 map<pair<int, int>, string> expected_answers;
 
-template <typename P>
+template <typename P> requires IsProblem<P>
 void register_solution(int day, int part)
 {
-    static_assert(derived_from<P, Problem>, "This is no problem");
-
     solutions[{day, part}] = make_shared<P>();
     if constexpr (HasSolution<P>)
     {

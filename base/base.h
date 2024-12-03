@@ -14,7 +14,10 @@ public:
 };
 
 template <typename P>
-concept HasSolution = std::derived_from<P, Problem> && requires
+concept IsProblem = std::derived_from<P, Problem>;
+
+template <typename P>
+concept HasSolution = IsProblem<P> && requires
 {
     { P::expected } -> std::convertible_to<std::string>;
 };
