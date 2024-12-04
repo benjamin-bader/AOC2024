@@ -85,7 +85,10 @@ auto all_points(const Board& board)
 
 bool point_in_board(const Board& board, Point p)
 {
-    return p.y >= 0 && p.y < board.size() && p.x >= 0 && p.x < board[0].size();
+    return p.y >= 0
+        && p.y < static_cast<int>(board.size())
+        && p.x >= 0
+        && p.x < static_cast<int>(board[0].size());
 }
 
 char char_at(const Board& board, Point p)
@@ -133,8 +136,8 @@ bool find_mas_in_x_shape(const Board& board, Point cur)
         return false;
     }
 
-    bool ul_to_lr = (ul == 'M' && lr == 'S' || ul == 'S' && lr == 'M');
-    bool ll_to_ur = (ll == 'M' && ur == 'S' || ll == 'S' && ur == 'M');
+    bool ul_to_lr = ((ul == 'M' && lr == 'S') || (ul == 'S' && lr == 'M'));
+    bool ll_to_ur = ((ll == 'M' && ur == 'S') || (ll == 'S' && ur == 'M'));
 
     return ul_to_lr && ll_to_ur;
 }
@@ -163,7 +166,10 @@ string PartTwo::solve()
 {
     const Board board = read_board();
     auto possible_points = all_points(board) | views::filter([&](Point p) {
-        return p.x != 0 && p.y != 0 && p.x != board[0].size() - 1 && p.y != board.size() - 1;
+        return p.x != 0
+            && p.y != 0
+            && p.x != static_cast<int>(board[0].size()) - 1
+            && p.y != static_cast<int>(board.size()) - 1;
     });
 
     auto num_x_mas = ranges::fold_left(possible_points, 0, [&](int acc, Point p) {
