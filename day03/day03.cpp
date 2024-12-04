@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
-#include <numeric>
 #include <regex>
 #include <sstream>
 #include <string>
@@ -37,7 +36,7 @@ string PartOne::solve()
 
     sregex_iterator it(input.cbegin(), input.cend(), kMulExpr);
     sregex_iterator end{};
-    auto total = accumulate(it, end, 0ull, [&](unsigned long long acc, const smatch& m) {
+    auto total = ranges::fold_left(it, end, 0ull, [&](unsigned long long acc, const smatch& m) {
         return acc + (stoull(m[1]) * stoull(m[2]));
     });
     
@@ -51,7 +50,7 @@ string PartTwo::solve()
 
     sregex_iterator it(input.cbegin(), input.cend(), kMulExprWithConditionals);
     sregex_iterator end{};
-    auto total = accumulate(it, end, 0ull, [&](unsigned long long acc, const smatch& m) {
+    auto total = ranges::fold_left(it, end, 0ull, [&](unsigned long long acc, const smatch& m) {
         if (m[0] == "do()")
         {
             doing = true;
