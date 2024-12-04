@@ -9,13 +9,13 @@ endif()
 
 set(DAY_NAME "day${DAY}")
 set(DAY_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${DAY_NAME}")
-set(BASE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/base")
+set(BASE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/day.tmpl")
 
 set(OLD_NUMBER "${NUMBER}")
 set(NUMBER "${DAY}")
 
 configure_file(
-    "${BASE_PATH}/DayCMakeListsTemplate.txt.in"
+    "${BASE_PATH}/CMakeLists.txt.in"
     "${DAY_PATH}/CMakeLists.txt"
     @ONLY
 )
