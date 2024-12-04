@@ -24,24 +24,10 @@ struct Point
     Point(const Point& other) : x(other.x), y(other.y) {}
     Point(Point&& other) noexcept : x(other.x), y(other.y) {}
 
-    Point& operator=(const Point& other)
-    {
-        x = other.x;
-        y = other.y;
-        return *this;
-    }
+    Point& operator=(const Point& other) = default;
+    Point& operator=(Point&& other) noexcept = default;
 
-    Point& operator=(Point&& other) noexcept
-    {
-        x = other.x;
-        y = other.y;
-        return *this;
-    }
-
-    bool operator==(const Point& other) const
-    {
-        return x == other.x && y == other.y;
-    }
+    bool operator==(const Point& other) const = default;
 
     Point operator+(const Point& other) const
     {
@@ -49,7 +35,55 @@ struct Point
     }
 };
 
-using Board = vector<vector<char>>;
+class Board
+{
+    vector<vector<char>> contents_;
+    int num_rows_;
+    int num_cols_;
+
+public:
+    Board(vector<vector<char>> contents)
+        : contents_(contents)
+        , num_rows_(static_cast<int>(contents.size()))
+        , num_cols_(static_cast<int>(contents[0].size()))
+    {}
+
+    int num_rows() const
+    {
+        return num_rows_;
+    }
+
+    int num_cols() const
+    {
+        return num_cols_;
+    }
+
+    char at(Point p) const
+    {
+        return contents_[p.y][p.x];
+    }
+
+    bool in_bounds(Point p) const
+    {
+        return p.y >= 0
+            && p.y < num_rows_
+            && p.x >= 0
+            && p.x < num_cols_;
+    }
+
+    auto all_points() const
+    {
+        int cols = num_cols();
+
+        auto to_point = [cols](int n) {
+            int x = n % cols;
+            int y = n / cols;
+            return Point{x, y};
+        };
+
+        return views::iota(0, num_rows() * num_cols()) | views::transform(to_point);
+    }
+};
 
 namespace
 {
@@ -60,40 +94,12 @@ Board read_board()
 {
     string line;
     ifstream file(kInputFile);
-    Board board;
+    vector<vector<char>> board;
     while (getline(file, line))
     {
         board.push_back(vector<char>(line.cbegin(), line.cend()));
     }
-    return board;
-}
-
-auto all_points(const Board& board)
-{
-    size_t num_rows = board.size();
-    size_t num_cols = board[0].size();
-    size_t num_cells = num_rows * num_cols;
-
-    auto to_point = [num_cols](size_t n) {
-        int x = static_cast<int>(n) % static_cast<int>(num_cols);
-        int y = static_cast<int>(n) / static_cast<int>(num_cols);
-        return Point{x, y};
-    };
-
-    return views::iota(static_cast<size_t>(0), num_cells) | views::transform(to_point);
-}
-
-bool point_in_board(const Board& board, Point p)
-{
-    return p.y >= 0
-        && p.y < static_cast<int>(board.size())
-        && p.x >= 0
-        && p.x < static_cast<int>(board[0].size());
-}
-
-char char_at(const Board& board, Point p)
-{
-    return board[p.y][p.x];
+    return {board};
 }
 
 bool find_xmas(const Board& board, Point cur, Point dir, string_view next)
@@ -103,7 +109,7 @@ bool find_xmas(const Board& board, Point cur, Point dir, string_view next)
         return true;
     }
 
-    if (!point_in_board(board, cur) || char_at(board, cur) != next[0])
+    if (!board.in_bounds(cur) || board.at(cur) != next[0])
     {
         return false;
     }
@@ -124,14 +130,12 @@ bool find_mas_in_x_shape(const Board& board, Point cur)
 
     // PRECONDITION: cur is not on the outermost edge of the board
 
-    char ul = char_at(board, {cur.x - 1, cur.y - 1});
-    char ur = char_at(board, {cur.x + 1, cur.y - 1});
-    char ll = char_at(board, {cur.x - 1, cur.y + 1});
-    char lr = char_at(board, {cur.x + 1, cur.y + 1});
+    char ul = board.at({cur.x - 1, cur.y - 1});
+    char ur = board.at({cur.x + 1, cur.y - 1});
+    char ll = board.at({cur.x - 1, cur.y + 1});
+    char lr = board.at({cur.x + 1, cur.y + 1});
 
-    auto dirs = vector<Point>{{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
-
-    if (char_at(board, cur) != 'A')
+    if (board.at(cur) != 'A')
     {
         return false;
     }
@@ -151,7 +155,7 @@ string PartOne::solve()
     vector<Point> dirs{{0, 1}, {1, 0}, {0, -1}, {-1, 0}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
     size_t num_xmases = 0;
 
-    for (auto p : all_points(board))
+    for (auto p : board.all_points())
     {
         for (auto& dir : dirs)
         {
@@ -165,11 +169,11 @@ string PartOne::solve()
 string PartTwo::solve()
 {
     const Board board = read_board();
-    auto possible_points = all_points(board) | views::filter([&](Point p) {
+    auto possible_points = board.all_points() | views::filter([&](Point p) {
         return p.x != 0
             && p.y != 0
-            && p.x != static_cast<int>(board[0].size()) - 1
-            && p.y != static_cast<int>(board.size()) - 1;
+            && p.x != board.num_cols() - 1
+            && p.y != board.num_rows() - 1;
     });
 
     auto num_x_mas = ranges::fold_left(possible_points, 0, [&](int acc, Point p) {
