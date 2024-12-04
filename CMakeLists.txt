@@ -5,11 +5,20 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(aoc2024 VERSION 0.1.0 LANGUAGES CXX)
 
+macro(add_warnings TARGET)
+    target_compile_options(
+        "${TARGET}"
+        PRIVATE
+        $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror -Wconversion>
+    )
+endmacro()
+
 add_subdirectory(base)
 
 add_executable(aoc2024 main.cpp)
-
-target_link_libraries(aoc2024 PRIVATE base day01 day02)
+target_link_libraries(aoc2024 PRIVATE base)
+add_warnings(aoc2024)
 
 macro(add_day DAY)
     add_subdirectory(${DAY})
