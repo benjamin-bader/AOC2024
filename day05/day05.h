@@ -9,14 +9,14 @@ namespace day05
 
 struct PartOne : Problem
 {
-    // static constexpr const char* expected = "TODO";
+    static constexpr const char* expected = "5955";
 
     std::string solve() override;
 };
 
 struct PartTwo : Problem
 {
-    // static constexpr const char* expected = "TODO";
+    static constexpr const char* expected = "4030";
 
     std::string solve() override;
 };

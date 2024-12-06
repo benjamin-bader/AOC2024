@@ -39,6 +39,7 @@ int main(int argc, char** argv)
     register_solution<day04::PartOne>(4, 1);
     register_solution<day04::PartTwo>(4, 2);
     register_solution<day05::PartOne>(5, 1);
+    register_solution<day05::PartTwo>(5, 2);
 
     if (argc == 3)
     {

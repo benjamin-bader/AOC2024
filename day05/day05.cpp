@@ -55,23 +55,6 @@ const string kTestInput = R"(47|53
 using Page = int;
 using Update = vector<Page>;
 
-ostream& operator<<(ostream& os, const Update& update)
-{
-    os << "[";
-    bool needs_comma = false;
-    for (Page p : update)
-    {
-        if (needs_comma)
-        {
-            os << ", ";
-        }
-        os << p;
-        needs_comma = true;
-    }
-    os << "]";
-    return os;
-}
-
 class Rules
 {
     // for  each page, the set of pages that the page must appear before
@@ -105,33 +88,12 @@ public:
             {
                 if (!is_ordered(update[i], update[j]))
                 {
-                    cout << "update " << update << " is invalid because " << update[i] << " does not come before " << update[j] << endl;
                     return false;
                 }
             }
         }
 
         return true;
-    }
-
-    void print_requirements()
-    {
-        cout << "direct requirements:" << endl;
-        for (const auto& [page, reqs] : requirements_by_page)
-        {
-            cout << page << ": [";
-            bool needs_comma = false;
-            for (Page p : reqs)
-            {
-                if (needs_comma)
-                {
-                    cout << ", ";
-                }
-                cout << p;
-                needs_comma = true;
-            }
-            cout << "]" << endl;
-        }
     }
 };
 
@@ -184,8 +146,6 @@ string PartOne::solve()
 {
     auto [rules, updates] = read_input();
 
-    rules.print_requirements();
-
     auto get_middle_page = [](const Update& update) {
         if (update.size() % 2 == 0) throw "uh oh";
         return update[update.size() / 2];
@@ -206,7 +166,28 @@ string PartOne::solve()
 
 string PartTwo::solve()
 {
-    return "TODO";
+    auto [rules, updates] = read_input();
+
+    auto is_incorrect_update = [&](const Update& update) {
+        return !rules.is_update_valid(update);
+    };
+
+    auto sort_update = [&](Update& update) {
+        sort(update.begin(), update.end(), [&](Page lhs, Page rhs) { return rules.is_ordered(lhs, rhs); });
+        return update;
+    };
+
+    auto get_middle_page = [](const Update& update) {
+        if (update.size() % 2 == 0) throw "uh oh";
+        return update[update.size() / 2];
+    };
+
+    auto fixed_incorrect_updates = updates
+        | views::filter(is_incorrect_update)
+        | views::transform(sort_update)
+        | views::transform(get_middle_page);
+
+    return to_string(ranges::fold_left(fixed_incorrect_updates, 0, plus<>{}));
 }
 
 } // namespace day05
