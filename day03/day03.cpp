@@ -1,5 +1,7 @@
 #include "day03.h"
 
+#include "parsers.h"
+
 #include <algorithm>
 #include <fstream>
 #include <iostream>
@@ -23,9 +25,7 @@ const regex kMulExprWithConditionals{R"(do\(\)|mul\((\d{1,3}),(\d{1,3})\)|don't\
 string read_input()
 {
     ifstream file(kInputFile);
-    stringstream buffer;
-    buffer << file.rdbuf();
-    return buffer.str();
+    return parsers::String(file);
 }
 
 } // namespace

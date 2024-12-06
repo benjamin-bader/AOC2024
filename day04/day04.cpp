@@ -1,5 +1,9 @@
 #include "day04.h"
 
+#include "board.h"
+#include "parsers.h"
+#include "point.h"
+
 #include <algorithm>
 #include <fstream>
 #include <iostream>
@@ -15,76 +19,6 @@ using namespace std;
 namespace day04
 {
 
-struct Point
-{
-    int x;
-    int y;
-
-    Point(int x, int y) : x(x), y(y) {}
-    Point(const Point& other) : x(other.x), y(other.y) {}
-    Point(Point&& other) noexcept : x(other.x), y(other.y) {}
-
-    Point& operator=(const Point& other) = default;
-    Point& operator=(Point&& other) noexcept = default;
-
-    bool operator==(const Point& other) const = default;
-
-    Point operator+(const Point& other) const
-    {
-        return Point{x + other.x, y + other.y};
-    }
-};
-
-class Board
-{
-    vector<vector<char>> contents_;
-    int num_rows_;
-    int num_cols_;
-
-public:
-    Board(vector<vector<char>> contents)
-        : contents_(contents)
-        , num_rows_(static_cast<int>(contents.size()))
-        , num_cols_(static_cast<int>(contents[0].size()))
-    {}
-
-    int num_rows() const
-    {
-        return num_rows_;
-    }
-
-    int num_cols() const
-    {
-        return num_cols_;
-    }
-
-    char at(Point p) const
-    {
-        return contents_[p.y][p.x];
-    }
-
-    bool in_bounds(Point p) const
-    {
-        return p.y >= 0
-            && p.y < num_rows_
-            && p.x >= 0
-            && p.x < num_cols_;
-    }
-
-    auto all_points() const
-    {
-        int cols = num_cols();
-
-        auto to_point = [cols](int n) {
-            int x = n % cols;
-            int y = n / cols;
-            return Point{x, y};
-        };
-
-        return views::iota(0, num_rows() * num_cols()) | views::transform(to_point);
-    }
-};
-
 namespace
 {
 
@@ -92,14 +26,9 @@ constexpr const char* kInputFile = "day04/day04.input";
 
 Board read_board()
 {
-    string line;
     ifstream file(kInputFile);
-    vector<vector<char>> board;
-    while (getline(file, line))
-    {
-        board.push_back(vector<char>(line.cbegin(), line.cend()));
-    }
-    return {board};
+    auto board = parsers::Lines(file, [](string s) { return vector<char>(s.cbegin(), s.cend()); });
+    return {move(board)};
 }
 
 bool find_xmas(const Board& board, Point cur, Point dir, string_view next)
@@ -130,10 +59,10 @@ bool find_mas_in_x_shape(const Board& board, Point cur)
 
     // PRECONDITION: cur is not on the outermost edge of the board
 
-    char ul = board.at({cur.x - 1, cur.y - 1});
-    char ur = board.at({cur.x + 1, cur.y - 1});
-    char ll = board.at({cur.x - 1, cur.y + 1});
-    char lr = board.at({cur.x + 1, cur.y + 1});
+    char ul = board.at({cur.x() - 1, cur.y() - 1});
+    char ur = board.at({cur.x() + 1, cur.y() - 1});
+    char ll = board.at({cur.x() - 1, cur.y() + 1});
+    char lr = board.at({cur.x() + 1, cur.y() + 1});
 
     if (board.at(cur) != 'A')
     {
@@ -170,10 +99,10 @@ string PartTwo::solve()
 {
     const Board board = read_board();
     auto possible_points = board.all_points() | views::filter([&](Point p) {
-        return p.x != 0
-            && p.y != 0
-            && p.x != board.num_cols() - 1
-            && p.y != board.num_rows() - 1;
+        return p.x() != 0
+            && p.y() != 0
+            && p.x() != board.num_cols() - 1
+            && p.y() != board.num_rows() - 1;
     });
 
     auto num_x_mas = ranges::fold_left(possible_points, 0, [&](int acc, Point p) {

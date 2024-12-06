@@ -5,6 +5,7 @@
 #include "day03/day03.h"
 #include "day04/day04.h"
 #include "day05/day05.h"
+#include "day06/day06.h"
 
 #include <functional>
 #include <iostream>
@@ -40,6 +41,8 @@ int main(int argc, char** argv)
     register_solution<day04::PartTwo>(4, 2);
     register_solution<day05::PartOne>(5, 1);
     register_solution<day05::PartTwo>(5, 2);
+    register_solution<day06::PartOne>(6, 1);
+    register_solution<day06::PartTwo>(6, 2);
 
     if (argc == 3)
     {

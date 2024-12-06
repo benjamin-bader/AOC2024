@@ -34,6 +34,8 @@ configure_file(
 
 file(TOUCH "${DAY_PATH}/${DAY_NAME}.input")
 
+file(APPEND "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt" "add_day(${DAY_NAME})\n")
+
 if("${OLD_NUMBER}" STREQUAL "")
     unset(OLD_NUMBER)
 else()

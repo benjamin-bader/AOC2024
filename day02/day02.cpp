@@ -1,5 +1,7 @@
 #include "day02.h"
 
+#include "parsers.h"
+
 #include <algorithm>
 #include <fstream>
 #include <iostream>
@@ -37,14 +39,7 @@ vector<Report> read_reports()
     vector<Report> reports;
 
     ifstream input("day02/day02.input");
-    string line;
-
-    while (getline(input, line))
-    {
-        reports.push_back(from_string(line));
-    }
-
-    return reports;
+    return parsers::Lines(input, from_string);
 }
 
 bool is_increasing(const Report& xs)
