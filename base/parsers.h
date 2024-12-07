@@ -8,6 +8,7 @@
 #include <string>
 #include <tuple>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace parsers
@@ -22,9 +23,15 @@ inline std::vector<std::string> Lines(std::istream& in)
     std::string line;
     while (std::getline(in, line))
     {
-        lines.push_back(move(line));
+        lines.push_back(std::move(line));
     }
     return lines;
+}
+
+inline std::vector<std::string> Lines(const std::string& s)
+{
+    std::istringstream ss(s);
+    return Lines(ss);
 }
 
 template <typename F>
@@ -35,9 +42,16 @@ std::vector<std::invoke_result_t<F, std::string>> Lines(std::istream& in, F&& fn
     while (std::getline(in, line))
     {
         auto result = fn(line);
-        lines.push_back(move(result));
+        lines.push_back(std::move(result));
     }
     return lines;
+}
+
+template <typename F>
+std::vector<std::invoke_result_t<F, std::string>> Lines(const std::string& s, F&& fn)
+{
+    std::istringstream ss(s);
+    return Lines(ss, fn);
 }
 
 inline std::string String(std::istream& in)
