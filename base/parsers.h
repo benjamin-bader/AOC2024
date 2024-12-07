@@ -47,6 +47,11 @@ inline std::string String(std::istream& in)
     return ss.str();
 }
 
+inline std::vector<char> Chars(const std::string& s)
+{
+    return std::vector<char>(s.begin(), s.end());
+}
+
 template <typename TIn, typename ...TOut>
 Parser<TIn, std::tuple<TOut...>> Sequence(Parser<TIn, TOut>... parsers)
 {

@@ -2,6 +2,7 @@
 
 #include "point.h"
 
+#include <iostream>
 #include <ranges>
 #include <vector>
 
@@ -11,6 +12,9 @@ class BasicBoard
     std::vector<std::vector<T>> contents_;
     int num_rows_;
     int num_cols_;
+
+    template <typename U>
+    friend std::ostream& operator<<(std::ostream& os, const BasicBoard<U>& board);
 
 public:
     BasicBoard(const std::vector<std::vector<T>>& contents)
@@ -25,8 +29,11 @@ public:
         , num_cols_(static_cast<int>(contents[0].size()))
     {}
 
-    BasicBoard(const BasicBoard&) = delete;
+    BasicBoard(const BasicBoard&) = default;
     BasicBoard(BasicBoard&&) noexcept = default;
+
+    BasicBoard& operator=(const BasicBoard&) = default;
+    BasicBoard& operator=(BasicBoard&&) noexcept = default;
 
     int num_rows() const
     {
@@ -39,6 +46,16 @@ public:
     }
 
     T at(const Point& p) const
+    {
+        return contents_[p.y()][p.x()];
+    }
+
+    const T& operator[](const Point& p) const
+    {
+        return contents_[p.y()][p.x()];
+    }
+
+    T& operator[](const Point& p)
     {
         return contents_[p.y()][p.x()];
     }
@@ -64,5 +81,20 @@ public:
         return std::views::iota(0, num_rows() * num_cols()) | std::views::transform(to_point);
     }
 };
+
+template <typename T>
+std::ostream& operator<<(std::ostream& out, const BasicBoard<T>& board)
+{
+    for (int y = 0; y < board.num_rows(); ++y)
+    {
+        for (int x = 0; x < board.num_cols(); ++x)
+        {
+            out << board.contents_[y][x];
+        }
+        out << '\n';
+    }
+
+    return out;
+}
 
 using Board = BasicBoard<char>;
