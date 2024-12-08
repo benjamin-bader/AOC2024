@@ -3,15 +3,13 @@
 #include "parsers.h"
 
 #include <algorithm>
-#include <array>
+#include <execution>
 #include <fstream>
 #include <iostream>
 #include <numeric>
 #include <ranges>
 #include <sstream>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -30,9 +28,7 @@ enum class OpType
     Concat = 2
 };
 
-constexpr const array kAllOps = {OpType::Add, OpType::Mul};
-
-intmax_t eval_op(uintmax_t lhs, uintmax_t rhs, OpType op)
+uintmax_t eval_op(uintmax_t lhs, uintmax_t rhs, OpType op)
 {
     switch (op)
     {
@@ -70,12 +66,26 @@ struct Calibration
         vector<OpType> possible;
         possible.resize(values.size() - 1, OpType::Add);
 
+        // early exit: any of the numbers are bigger than the expected result
+        if (ranges::any_of(values, [this](uintmax_t value) { return value > expected; }))
+        {
+            return false;
+        }
+
+        // constraint: the last op can be concat iff the expected result, as a string,
+        //             ends with the last number.
+        bool last_op_concat = to_string(expected).ends_with(to_string(values.back()));
+
         do
         {
             uintmax_t result = values[0];
             for (size_t i = 1; i < values.size(); ++i)
             {
                 result = eval_op(result, values[i], possible[i - 1]);
+                if (result > expected)
+                {
+                    break;
+                }
             }
 
             if (result == expected)
@@ -83,23 +93,27 @@ struct Calibration
                 return true;
             }
         }
-        while (permute(possible, num_ops));
+        while (permute(possible, num_ops, last_op_concat));
 
         return false;
     }
 
-    bool permute(vector<OpType>& possible, int ceiling) const
+    bool permute(vector<OpType>& possible, int ceiling, bool last_op_concat) const
     {
         for (size_t i = 0; i < possible.size(); ++i)
         {
             possible[i] = static_cast<OpType>((static_cast<int>(possible[i]) + 1) % ceiling);
-            if (possible[i] != OpType::Add)
+            if (i == possible.size() - 1 && !last_op_concat && possible.back() == OpType::Concat)
+            {
+                possible[i] = OpType::Add;
+            }
+            else if (possible[i] != OpType::Add)
             {
                 return true;
             }
         }
 
-        return !all_of(possible.begin(), possible.end(), [](OpType op) { return op == OpType::Add; });
+        return ranges::any_of(possible, [](OpType op) { return op != OpType::Add; });
     }
 };
 
@@ -163,21 +177,19 @@ string PartOne::solve()
 
 string PartTwo::solve()
 {
-    auto valid_calibrations = read_input()
-        | views::filter([](const Calibration& c) { return c.find_valid_ops(3); })
-        | views::transform(&Calibration::expected);
+    auto all_calibrations = read_input();
 
-    uintmax_t sum = 0;
-    for (auto calibration : valid_calibrations)
-    {
-        sum += calibration;
-        if (sum < calibration)
-        {
-            throw "Overflow";
+    uintmax_t sum = transform_reduce(
+        std::execution::par_unseq,
+        all_calibrations.cbegin(), all_calibrations.cend(),
+        0ULL,
+        std::plus<>(),
+        [](const Calibration& c) {
+            return c.find_valid_ops(3) ? c.expected : 0ULL;
         }
-    }
+    );
 
-    return to_string(ranges::fold_left(valid_calibrations, 0ULL, plus<>{}));
+    return to_string(sum);
 }
 
 } // namespace day07
