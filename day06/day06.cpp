@@ -6,6 +6,7 @@
 #include "turtle.h"
 
 #include <algorithm>
+#include <execution>
 #include <fstream>
 #include <iostream>
 #include <ranges>
@@ -121,16 +122,24 @@ string PartTwo::solve()
     auto start = find_start(board);
     auto simple_path = walk(board, start, Dir::UP).visited;
 
-    auto loops = simple_path
+    auto simple_path_points = simple_path
         | views::transform(&Turtle::position)
         | views::filter([&](Point p) { return p != start; })
-        | ranges::to<unordered_set>()
-        | views::filter([&](Point p) {
-            auto result = walk(board, start, Dir::UP, p);
-            return result.loop_detected;
-        });
+        | ranges::to<unordered_set>();
 
-    return to_string(ranges::distance(loops));
+
+    auto num_loops = transform_reduce(
+        execution::par_unseq,
+        simple_path_points.begin(), simple_path_points.end(),
+        0,
+        plus<>{},
+        [&](Point p) {
+            auto result = walk(board, start, Dir::UP, p);
+            return result.loop_detected ? 1 : 0;;
+        }
+    );
+
+    return to_string(num_loops);
 }
 
 } // namespace day06
