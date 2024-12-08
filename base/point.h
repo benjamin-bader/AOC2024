@@ -3,6 +3,7 @@
 #include "hash.h"
 
 #include <iostream>
+#include <numeric>
 
 class Point
 {
@@ -11,7 +12,7 @@ class Point
 
 public:
 
-    Point() = default;
+    constexpr Point() : Point(0, 0) {}
     constexpr Point(int x, int y) : x_(x), y_(y) {}
     constexpr Point(const Point&) = default;
     constexpr Point(Point&&) noexcept = default;
@@ -19,27 +20,27 @@ public:
     Point& operator=(const Point&) = default;
     Point& operator=(Point&&) noexcept = default;
 
-    int x() const
+    constexpr int x() const
     {
         return x_;
     }
 
-    int y() const
+    constexpr int y() const
     {
         return y_;
     }
 
-    Point operator+(const Point& other) const
+    constexpr Point operator+(const Point& other) const
     {
         return {x_ + other.x_, y_ + other.y_};
     }
 
-    auto operator<=>(const Point& other) const = default;
-
-    bool operator==(const Point& other) const
+    constexpr Point operator-(const Point& other) const
     {
-        return x_ == other.x_ && y_ == other.y_;
+        return {x_ - other.x_, y_ - other.y_};
     }
+
+    constexpr auto operator<=>(const Point& other) const = default;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Point& p)

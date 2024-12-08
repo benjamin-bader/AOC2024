@@ -6,6 +6,7 @@ target_sources(base
     FILES
         base.h
         board.h
+        hash.h
         parsers.h
         point.h
         turtle.h
