@@ -159,8 +159,7 @@ Puzzle read_input()
 
     int num_lines = 0;
     size_t width = 0;
-    string line;
-    while (getline(*input, line))
+    for (const auto& line : parsers::Lines(*input))
     {
         width = std::max(width, line.size());
         for (size_t i = 0; i < line.size(); i++)
