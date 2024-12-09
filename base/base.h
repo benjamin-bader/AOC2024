@@ -5,6 +5,10 @@
 #include <type_traits>
 #include <utility>
 
+extern bool g_verbose;
+
+std::ostream& dbg();
+
 class Problem
 {
 public:

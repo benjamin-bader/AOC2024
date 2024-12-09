@@ -50,6 +50,22 @@ int main(int argc, char** argv)
     register_solution<day08::PartOne>(8, 1);
     register_solution<day08::PartTwo>(8, 2);
 
+    while (argc > 1 && argv[1][0] == '-')
+    {
+        if (string(argv[1]) == "-v")
+        {
+            g_verbose = true;
+        }
+        else
+        {
+            cerr << "Unknown option: " << argv[1] << endl;
+            return 1;
+        }
+
+        argc--;
+        argv++;
+    }
+
     if (argc == 3)
     {
         int day = stoi(argv[1]);

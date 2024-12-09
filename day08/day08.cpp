@@ -181,7 +181,7 @@ string PartOne::solve()
     Puzzle p = read_input();
     p.find_antinodes();
 
-    // cout << p << endl;
+    dbg() << p << endl;
 
     return to_string(p.antinodes.size());
 }
@@ -191,7 +191,7 @@ string PartTwo::solve()
     Puzzle p = read_input();
     p.find_antinodes(true);
 
-    // cout << p << endl;
+    dbg() << p << endl;
 
     return to_string(p.antinodes.size());
 }
