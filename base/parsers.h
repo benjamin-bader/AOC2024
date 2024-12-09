@@ -23,6 +23,8 @@ inline std::vector<std::string> Lines(std::istream& in)
     std::string line;
     while (std::getline(in, line))
     {
+        line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+
         lines.push_back(std::move(line));
     }
     return lines;
@@ -41,6 +43,8 @@ std::vector<std::invoke_result_t<F, std::string>> Lines(std::istream& in, F&& fn
     std::string line;
     while (std::getline(in, line))
     {
+        line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+
         auto result = fn(line);
         lines.push_back(std::move(result));
     }
@@ -58,7 +62,11 @@ inline std::string String(std::istream& in)
 {
     std::stringstream ss;
     ss << in.rdbuf();
-    return ss.str();
+    
+    std::string result = ss.str();
+    result.erase(std::remove(result.begin(), result.end(), '\r'), result.end());
+    
+    return result;   
 }
 
 inline std::vector<char> Chars(const std::string& s)

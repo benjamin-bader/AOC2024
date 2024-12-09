@@ -1,5 +1,7 @@
 #include "day05.h"
 
+#include "parsers.h"
+
 #include <algorithm>
 #include <deque>
 #include <fstream>
@@ -115,9 +117,11 @@ pair<Rules, vector<Update>> read_input()
 
     auto input = get_input();
 
-    string line;
-    while (getline(*input, line))
+    auto lines = parsers::Lines(*input);
+    auto it = lines.begin();
+    while (it != lines.end())
     {
+        const auto& line = *it++;
         if (line.empty())
         {
             break;
@@ -129,8 +133,9 @@ pair<Rules, vector<Update>> read_input()
         rules.add_rule(before, after);
     }
 
-    while (getline(*input, line))
+    while (it != lines.end())
     {
+        const auto& line = *it++;
         if (line.empty())
         {
             break;
