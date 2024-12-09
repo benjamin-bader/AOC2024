@@ -1,0 +1,19 @@
+#include "solutions.h"
+
+using namespace std;
+
+map<pair<int, int>, shared_ptr<Problem>> solutions;
+map<pair<int, int>, string> expected_answers;
+
+template <typename P> requires IsProblem<P>
+void register_solution(int day, int part)
+{
+    solutions[{day, part}] = make_shared<P>();
+    if constexpr (HasSolution<P>)
+    {
+        expected_answers[{day, part}] = P::expected;
+    }
+}
+
+// Generated code follows; see CMakeLists.txt for details
+

@@ -18,12 +18,43 @@ add_subdirectory(base)
 
 add_executable(aoc2024 main.cpp)
 target_link_libraries(aoc2024 PRIVATE base)
+target_sources(aoc2024
+    PRIVATE
+    FILE_SET HEADERS FILES
+        solutions.h
+)
+
 add_warnings(aoc2024)
 
+set(DAYS )
 macro(add_day DAY)
     add_subdirectory(${DAY})
     target_link_libraries(aoc2024 PRIVATE ${DAY})
+    list(APPEND DAYS "${DAY}")
 endmacro()
+
+macro(generate_solutions)
+    set(SOLUTION_FILE "${CMAKE_CURRENT_BINARY_DIR}/solutions.cpp")
+    file(COPY_FILE "${CMAKE_CURRENT_SOURCE_DIR}/solutions.cpp.in" "${SOLUTION_FILE}")
+
+    foreach(DAY ${DAYS})
+        file(APPEND "${SOLUTION_FILE}" "#include \"${DAY}/${DAY}.h\"\n")
+    endforeach()
+
+    file(APPEND "${SOLUTION_FILE}" "void register_solutions() {\n")
+    foreach(DAY ${DAYS})
+        string(REPLACE "day" "" DAY_NUM "${DAY}")
+        string(REPLACE "0" "" DAY_NUM "${DAY_NUM}")
+        file(APPEND "${SOLUTION_FILE}" "    register_solution<${DAY}::PartOne>(${DAY_NUM}, 1);\n")
+        file(APPEND "${SOLUTION_FILE}" "    register_solution<${DAY}::PartTwo>(${DAY_NUM}, 2);\n")
+    endforeach()
+
+    file(APPEND "${SOLUTION_FILE}" "}\n")
+
+    target_sources(aoc2024 PRIVATE "${SOLUTION_FILE}")
+endmacro()
+
+cmake_language(DEFER CALL generate_solutions)
 
 add_day(day01)
 add_day(day02)

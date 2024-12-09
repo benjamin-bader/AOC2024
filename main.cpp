@@ -1,60 +1,33 @@
 #include "base/base.h"
 
-#include "day01/day01.h"
-#include "day02/day02.h"
-#include "day03/day03.h"
-#include "day04/day04.h"
-#include "day05/day05.h"
-#include "day06/day06.h"
-#include "day07/day07.h"
-#include "day08/day08.h"
+#include "solutions.h"
 
-#include <functional>
+#include <exception>
 #include <iostream>
-#include <map>
-#include <memory>
+#include <regex>
 #include <string>
 #include <utility>
 
 using namespace std;
 
-map<pair<int, int>, shared_ptr<Problem>> solutions;
-map<pair<int, int>, string> expected_answers;
-
-template <typename P> requires IsProblem<P>
-void register_solution(int day, int part)
-{
-    solutions[{day, part}] = make_shared<P>();
-    if constexpr (HasSolution<P>)
-    {
-        expected_answers[{day, part}] = P::expected;
-    }
-}
+regex verbose_arg("-(v+)");
 
 int main(int argc, char** argv)
 {
-    register_solution<day01::PartOne>(1, 1);
-    register_solution<day01::PartTwo>(1, 2);
-    register_solution<day02::PartOne>(2, 1);
-    register_solution<day02::PartTwo>(2, 2);
-    register_solution<day03::PartOne>(3, 1);
-    register_solution<day03::PartTwo>(3, 2);
-    register_solution<day04::PartOne>(4, 1);
-    register_solution<day04::PartTwo>(4, 2);
-    register_solution<day05::PartOne>(5, 1);
-    register_solution<day05::PartTwo>(5, 2);
-    register_solution<day06::PartOne>(6, 1);
-    register_solution<day06::PartTwo>(6, 2);
-    register_solution<day07::PartOne>(7, 1);
-    register_solution<day07::PartTwo>(7, 2);
-    register_solution<day08::PartOne>(8, 1);
-    register_solution<day08::PartTwo>(8, 2);
+    register_solutions();
 
     while (argc > 1 && argv[1][0] == '-')
     {
-        if (string(argv[1]) == "-v")
+        smatch m;
+        string arg(argv[1]);
+        if (regex_match(arg, m, verbose_arg))
         {
-            g_verbose = true;
+            // count the number of 'v's in the argument
+            g_verbose += static_cast<int>(m[1].length());
+        }
+        else if (arg == "-t")
+        {
+            g_test_input = true;
         }
         else
         {
@@ -77,7 +50,15 @@ int main(int argc, char** argv)
             cerr << "No problem found for day " << day << " part " << part << endl;
             return 1;
         }
-        cout << it->second->solve() << endl;
+
+        try
+        {
+            cout << it->second->solve() << endl;
+        }
+        catch (const std::exception& e)
+        {
+            std::cerr << e.what() << '\n';
+        }
     }
     else
     {
@@ -85,17 +66,38 @@ int main(int argc, char** argv)
         for (const auto& [key, problem] : solutions)
         {
             auto it = expected_answers.find(key);
-            if (it == expected_answers.end())
+            if (it == expected_answers.end() && !g_test_input)
             {
                 continue;
             }
 
-            auto& expected = it->second;
-            auto actual = problem->solve();
+            auto expected = g_test_input ? "" : it->second;
 
-            string color = actual == expected ? "\033[32m" : "\033[31m";
-            string message = actual == expected ? "[PASS]" : "[FAIL]";
+            bool did_throw = false;
+            string actual;
+            try
+            {
+                actual = problem->solve();
+            }
+            catch (const std::exception& e)
+            {
+                actual = e.what();
+                did_throw = true;
+            }
+
+            bool passed = !did_throw && actual == expected;
+
+            string color = passed ? "\033[32m" : "\033[31m";
+            string message = passed ? "[PASS]" : "[FAIL]";
             string clear = "\033[0m";
+            string expected_message = " (expected " + expected + ")";
+
+            if (g_test_input)
+            {
+                color = "\033[33m";
+                message = "[TEST]";
+                expected_message = "";
+            }
 
             if (actual != expected)
             {
@@ -105,7 +107,7 @@ int main(int argc, char** argv)
             cout
                 << color << message << clear
                 << ": Day " << key.first << " Part " << key.second << ": "
-                << actual << " (expected " << expected << ")" << endl;
+                << actual << expected_message << endl;
         }
 
         return fails;

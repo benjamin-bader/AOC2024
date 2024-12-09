@@ -5,11 +5,11 @@
 using namespace std;
 
 bool g_test_input = false;
-bool g_verbose = false;
+int g_verbose = 0;
 
-ostream& dbg()
+ostream& dbg(LogLevel level)
 {
-    if (g_verbose)
+    if (g_verbose >= static_cast<int>(level))
     {
         return cout;
     }

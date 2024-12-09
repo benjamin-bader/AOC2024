@@ -1,9 +1,13 @@
 #include "day@NUMBER@.h"
 
 #include <algorithm>
+#include <exception>
 #include <fstream>
 #include <iostream>
+#include <memory>
+#include <numeric>
 #include <ranges>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -19,6 +23,17 @@ namespace
 {
 
 constexpr const char* kInputFile = "day@NUMBER@/day@NUMBER@.input";
+constexpr const char* kTestInput = "TODO";
+
+unique_ptr<istream> get_input()
+{
+    if (g_test_input)
+    {
+        return make_unique<stringstream>(kTestInput);
+    }
+
+    return make_unique<ifstream>(kInputFile);
+}
 
 } // namespace
 
