@@ -82,7 +82,7 @@ public:
                 ++s;
             }
 
-            while (f >= 0 && blocks_[f].is_space())
+            while (f > s && blocks_[f].is_space())
             {
                 --f;
             }
