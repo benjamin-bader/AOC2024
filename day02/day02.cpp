@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <ranges>
 #include <sstream>
 #include <string>
@@ -21,6 +22,24 @@ using Report = vector<int>;
 
 namespace
 {
+
+constexpr const char* kInputFile = "day02/day02.input";
+constexpr const char* kTestInput = R"(7 6 4 2 1
+1 2 7 8 9
+9 7 6 2 1
+1 3 2 4 5
+8 6 4 4 1
+1 3 6 7 9)";
+
+unique_ptr<istream> get_input()
+{
+    if (g_test_input)
+    {
+        return make_unique<stringstream>(kTestInput);
+    }
+
+    return make_unique<ifstream>(kInputFile);
+}
 
 Report from_string(const string& s)
 {
@@ -38,8 +57,8 @@ vector<Report> read_reports()
 {
     vector<Report> reports;
 
-    ifstream input("day02/day02.input");
-    return parsers::Lines(input, from_string);
+    auto input = get_input();
+    return parsers::Lines(*input, from_string);
 }
 
 bool is_increasing(const Report& xs)

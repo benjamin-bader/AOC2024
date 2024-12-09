@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <ranges>
 #include <string>
 #include <string_view>
@@ -23,11 +24,31 @@ namespace
 {
 
 constexpr const char* kInputFile = "day04/day04.input";
+constexpr const char* kTestInput = R"(MMMSXXMASM
+MSAMXMSMSA
+AMXSXMAAMM
+MSAMASMSMX
+XMASAMXAMM
+XXAMMXXAMA
+SMSMSASXSS
+SAXAMASAAA
+MAMMMXMMMM
+MXMXAXMASX)";
+
+unique_ptr<istream> get_input()
+{
+    if (g_test_input)
+    {
+        return make_unique<stringstream>(kTestInput);
+    }
+
+    return make_unique<ifstream>(kInputFile);
+}
 
 Board read_board()
 {
-    ifstream file(kInputFile);
-    auto board = parsers::Lines(file, [](string s) { return vector<char>(s.cbegin(), s.cend()); });
+    auto input = get_input();
+    auto board = parsers::Lines(*input, [](string s) { return vector<char>(s.cbegin(), s.cend()); });
     return {move(board)};
 }
 

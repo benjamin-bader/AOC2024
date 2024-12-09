@@ -129,6 +129,16 @@ constexpr const char* kTestInput = R"(190: 10 19
 21037: 9 7 18 13
 292: 11 6 16 20)";
 
+unique_ptr<istream> get_input()
+{
+    if (g_test_input)
+    {
+        return make_unique<stringstream>(kTestInput);
+    }
+
+    return make_unique<ifstream>(kInputFile);
+}
+
 Calibration parse_calibration(const string& line)
 {
     size_t pos = line.find(":");
@@ -149,9 +159,8 @@ Calibration parse_calibration(const string& line)
 
 vector<Calibration> read_input()
 {
-    //return parsers::Lines(kTestInput, parse_calibration);
-    ifstream input(kInputFile);
-    return parsers::Lines(input, parse_calibration);
+    auto input = get_input();
+    return parsers::Lines(*input, parse_calibration);
 }
 
 } // namespace

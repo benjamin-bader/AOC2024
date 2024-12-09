@@ -4,8 +4,10 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <numeric>
 #include <ranges>
+#include <sstream>
 #include <vector>
 
 namespace day01
@@ -13,13 +15,36 @@ namespace day01
 
 using namespace std;
 
+namespace
+{
+
+constexpr const char* kInputFile = "day01/day01.input";
+constexpr const char* kTestInput = R"(3   4
+4   3
+2   5
+1   3
+3   9
+3   3)";
+
+unique_ptr<istream> get_input()
+{
+    if (g_test_input)
+    {
+        return make_unique<stringstream>(kTestInput);
+    }
+
+    return make_unique<ifstream>(kInputFile);
+}
+
+} // namespace
+
 string PartOne::solve()
 {
     vector<int> left, right;
-    ifstream input("day01/day01.input");
+    auto input = get_input();
 
     int x, y;
-    while (input >> x >> y)
+    while (*input >> x >> y)
     {
         left.push_back(x);
         right.push_back(y);
@@ -37,10 +62,10 @@ string PartTwo::solve()
 {
     vector<int> left;
     map<int, int> right_column_counts;
-    ifstream input("day01/day01.input");
+    auto input = get_input();
 
     int x, y;
-    while (input >> x >> y)
+    while (*input >> x >> y)
     {
         left.push_back(x);
         right_column_counts[y]++;

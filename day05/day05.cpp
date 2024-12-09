@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <ranges>
 #include <set>
 #include <sstream>
@@ -51,6 +52,16 @@ const string kTestInput = R"(47|53
 61,13,29
 97,13,75,29,47
 )";
+
+unique_ptr<istream> get_input()
+{
+    if (g_test_input)
+    {
+        return make_unique<stringstream>(kTestInput);
+    }
+
+    return make_unique<ifstream>(kInputFile);
+}
 
 using Page = int;
 using Update = vector<Page>;
@@ -102,11 +113,10 @@ pair<Rules, vector<Update>> read_input()
     Rules rules;
     vector<Update> updates;
 
-    ifstream input(kInputFile);
-    // istringstream input(string{kTestInput});
+    auto input = get_input();
 
     string line;
-    while (getline(input, line))
+    while (getline(*input, line))
     {
         if (line.empty())
         {
@@ -119,7 +129,7 @@ pair<Rules, vector<Update>> read_input()
         rules.add_rule(before, after);
     }
 
-    while (getline(input, line))
+    while (getline(*input, line))
     {
         if (line.empty())
         {

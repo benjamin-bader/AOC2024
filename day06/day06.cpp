@@ -9,6 +9,7 @@
 #include <execution>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <ranges>
 #include <string>
 #include <unordered_map>
@@ -39,11 +40,20 @@ constexpr const char* kTestInput = R"(
 ......#...
 )";
 
+unique_ptr<istream> get_input()
+{
+    if (g_test_input)
+    {
+        return make_unique<stringstream>(kTestInput);
+    }
+
+    return make_unique<ifstream>(kInputFile);
+}
+
 Board read_board()
 {
-    ifstream input(kInputFile);
-    // stringstream input{string{kTestInput}.substr(1)};
-    auto lines = parsers::Lines(input, parsers::Chars);
+    auto input = get_input();
+    auto lines = parsers::Lines(*input, parsers::Chars);
     return {lines};
 }
 

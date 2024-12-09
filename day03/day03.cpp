@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <regex>
 #include <sstream>
 #include <string>
@@ -18,14 +19,25 @@ namespace
 {
 
 constexpr const char* kInputFile = "day03/day03.input";
+constexpr const char* kTestInput = "xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))";
 
 const regex kMulExpr{R"(mul\((\d{1,3}),(\d{1,3})\))"};
 const regex kMulExprWithConditionals{R"(do\(\)|mul\((\d{1,3}),(\d{1,3})\)|don't\(\))"};
 
+unique_ptr<istream> get_input()
+{
+    if (g_test_input)
+    {
+        return make_unique<stringstream>(kTestInput);
+    }
+
+    return make_unique<ifstream>(kInputFile);
+}
+
 string read_input()
 {
-    ifstream file(kInputFile);
-    return parsers::String(file);
+    auto input = get_input();
+    return parsers::String(*input);
 }
 
 } // namespace

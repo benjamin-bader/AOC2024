@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <ranges>
 #include <sstream>
 #include <string>
@@ -36,6 +37,16 @@ constexpr const char* kTestInput = R"(............
 .........A..
 ............
 ............)";
+
+unique_ptr<istream> get_input()
+{
+    if (g_test_input)
+    {
+        return make_unique<stringstream>(kTestInput);
+    }
+
+    return make_unique<ifstream>(kInputFile);
+}
 
 struct Puzzle
 {
@@ -142,15 +153,14 @@ ostream& operator<<(ostream& out, const Puzzle& p)
 
 Puzzle read_input()
 {
-    ifstream input(kInputFile);
-    //stringstream input(kTestInput);
+    auto input = get_input();
     
     Puzzle puzzle;
 
     int num_lines = 0;
     size_t width = 0;
     string line;
-    while (getline(input, line))
+    while (getline(*input, line))
     {
         width = std::max(width, line.size());
         for (size_t i = 0; i < line.size(); i++)
