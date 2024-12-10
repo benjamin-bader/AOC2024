@@ -113,7 +113,7 @@ public:
 
             // at this point, f is at the (rightmost) edge of a file.  count how big the file is.
             int cur_id = blocks_[f].id();
-            int block_size = 0;
+            size_t block_size = 0;
             while (f != numeric_limits<size_t>::max() && blocks_[f].id() == cur_id)
             {
                 --f;
@@ -131,7 +131,7 @@ public:
             size_t s = 0;
             while (s < blocks_.size())
             {
-                int found = 0;
+                size_t found = 0;
                 while (s + found < f && blocks_[s + found].is_space() && found < block_size)
                 {
                     ++found;
