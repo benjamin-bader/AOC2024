@@ -9,7 +9,6 @@
 #include <memory>
 #include <numeric>
 #include <ranges>
-#include <set>
 #include <sstream>
 #include <string>
 #include <unordered_map>
@@ -97,7 +96,7 @@ public:
 
     void defragment()
     {
-        set<int> moved_files;
+        unordered_set<int> moved_files;
 
         for (size_t f = blocks_.size() - 1; f < blocks_.size(); --f)
         {
@@ -123,13 +122,10 @@ public:
             // f is no longer pointed at the last block of the file; it's now pointed at the first block of the next file.
             ++f;
 
-            dbg() << "defrag: cur_id=" << cur_id << " block_size=" << block_size << " f=" << f << endl;
-
             // CONDITION: block_size >= 1
             
             // now we know how big the file is; find the left-most block of spaces that will fit it.
-            size_t s = 0;
-            while (s < blocks_.size())
+            for (size_t s = 0; s < f; s++)
             {
                 size_t found = 0;
                 while (s + found < f && blocks_[s + found].is_space() && found < block_size)
@@ -137,34 +133,24 @@ public:
                     ++found;
                 }
 
-                if (found != block_size)
+                if (found == block_size)
                 {
-                    // move one after the last space we found
-                    s += found + 1;
-                    continue;
+                    // we found a contiguous block of spaces that will fit the file.  move the file there.
+                    for (size_t i = 0; i < block_size; ++i)
+                    {
+                        blocks_[s + i].set_id(cur_id);
+                        blocks_[f + i].set_id(-1);
+                    }
+
+                    break;
                 }
 
-                dbg() << "Found a contiguous block of " << block_size << " spaces at " << s << endl;
-
-                // we found a contiguous block of spaces that will fit the file.  move the file there.
-                for (size_t i = 0; i < block_size; ++i)
-                {
-                    blocks_[s + i].set_id(cur_id);
-                    blocks_[f + i].set_id(-1);
-                }
-
-                break;
+                // skip any spaces we found (the for-loop will move s past them)
+                s += found;
             }
 
             moved_files.insert(cur_id);
         }
-
-        dbg() << "defrag: moved_files=";
-        for (auto id : moved_files)
-        {
-            dbg() << id << " ";
-        }
-        dbg() << endl;
     }
 
     uintmax_t checksum() const
