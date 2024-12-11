@@ -2,6 +2,7 @@
 
 #include "point.h"
 
+#include <array>
 #include <iostream>
 #include <ranges>
 #include <vector>
@@ -79,6 +80,16 @@ public:
         };
 
         return std::views::iota(0, num_rows() * num_cols()) | std::views::transform(to_point);
+    }
+
+    auto cardinal_neighbors(Point point) const
+    {
+        return std::array {
+            point + Dir::UP,
+            point + Dir::RIGHT,
+            point + Dir::DOWN,
+            point + Dir::LEFT
+        } | std::views::filter([this](Point p) { return in_bounds(p); });
     }
 };
 
