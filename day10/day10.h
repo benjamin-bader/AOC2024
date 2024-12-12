@@ -16,7 +16,7 @@ struct PartOne : Problem
 
 struct PartTwo : Problem
 {
-    // static constexpr const char* expected = "TODO";
+    static constexpr const char* expected = "1960";
 
     std::string solve() override;
 };
