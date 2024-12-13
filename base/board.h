@@ -51,6 +51,11 @@ public:
         return contents_[p.y()][p.x()];
     }
 
+    T& at(const Point& p)
+    {
+        return contents_[p.y()][p.x()];
+    }
+
     const T& operator[](const Point& p) const
     {
         return contents_[p.y()][p.x()];
@@ -84,12 +89,9 @@ public:
 
     auto cardinal_neighbors(Point point) const
     {
-        return std::array {
-            point + Dir::UP,
-            point + Dir::RIGHT,
-            point + Dir::DOWN,
-            point + Dir::LEFT
-        } | std::views::filter([this](Point p) { return in_bounds(p); });
+        return Dir::CARDINALS
+            | std::views::transform([point](Point dir) { return point + dir; })
+            | std::views::filter([this](Point p) { return in_bounds(p); });
     }
 };
 

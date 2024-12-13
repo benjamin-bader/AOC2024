@@ -2,6 +2,7 @@
 
 #include "hash.h"
 
+#include <array>
 #include <iostream>
 #include <numeric>
 
@@ -72,5 +73,7 @@ constexpr Point UP{0, -1};
 constexpr Point DOWN{0, 1};
 constexpr Point LEFT{-1, 0};
 constexpr Point RIGHT{1, 0};
+
+constexpr const auto CARDINALS = std::array {UP, RIGHT, DOWN, LEFT };
 
 } // namespace Dir
