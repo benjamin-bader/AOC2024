@@ -19,6 +19,19 @@ using Parser = TOut (*)(TIn);
 
 inline std::vector<std::string> Lines(std::istream& in)
 {
+    while (true)
+    {
+        int ch = in.peek();
+        if (ch == '\r' || ch == '\n' || ch == ' ' || ch == '\t')
+        {
+            in.ignore(1, ch);
+        }
+        else
+        {
+            break;
+        }
+    }
+
     std::vector<std::string> lines;
     std::string line;
     while (std::getline(in, line))
@@ -39,6 +52,19 @@ inline std::vector<std::string> Lines(const std::string& s)
 template <typename F>
 std::vector<std::invoke_result_t<F, std::string>> Lines(std::istream& in, F&& fn)
 {
+    while (true)
+    {
+        int ch = in.peek();
+        if (ch == '\r' || ch == '\n' || ch == ' ' || ch == '\t')
+        {
+            in.ignore(1, ch);
+        }
+        else
+        {
+            break;
+        }
+    }
+
     std::vector<std::invoke_result_t<F, std::string>> lines;
     std::string line;
     while (std::getline(in, line))
@@ -62,11 +88,11 @@ inline std::string String(std::istream& in)
 {
     std::stringstream ss;
     ss << in.rdbuf();
-    
+
     std::string result = ss.str();
     result.erase(std::remove(result.begin(), result.end(), '\r'), result.end());
-    
-    return result;   
+
+    return result;
 }
 
 inline std::vector<char> Chars(const std::string& s)

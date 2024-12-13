@@ -30,7 +30,8 @@ namespace
 {
 
 constexpr const char* kInputFile = "day12/day12.input";
-constexpr const char* kTestInput = R"(RRRRIICCFF
+constexpr const char* kTestInput = R"(
+RRRRIICCFF
 RRRRIICCCF
 VVRRRCCFFF
 VVRCCCJFFF
@@ -41,19 +42,20 @@ MIIIIIJJEE
 MIIISIJEEE
 MMMISSJEEE)";
 
-constexpr const char* kShouldBeThreeEightSix = R"(AAAAAA
-AAABBA
-AAABBA
-ABBAAA
-ABBAAA
-AAAAAA)";
+// claimed to be 436
+constexpr const char* kRedditSuggestion = R"(
+0.000
+00.00
+0.000
+000.0
+00000)";
 
 [[maybe_unused]]
 unique_ptr<istream> get_input()
 {
     if (g_test_input)
     {
-        return make_unique<stringstream>(kShouldBeThreeEightSix);
+        return make_unique<stringstream>(kTestInput);
     }
 
     return make_unique<ifstream>(kInputFile);
@@ -71,21 +73,28 @@ class UnionFind
 {
     vector<int> parent_;
     vector<int> rank_;
+    int num_rows_;
     int num_cols_;
 
 public:
     UnionFind(int num_rows, int num_cols)
         : parent_(num_rows * num_cols)
         , rank_(num_rows * num_cols, 1)
+        , num_rows_(num_rows)
         , num_cols_(num_cols)
     {
         iota(parent_.begin(), parent_.end(), 0);
     }
 
-    int find(Point p)
+    Point find(Point p)
     {
+        if (p.x() < 0 || p.x() >= num_cols_ || p.y() < 0 || p.y() >= num_rows_)
+        {
+            return {-1, -1};
+        }
+
         int i = point_to_index(p);
-        return find(i);
+        return index_to_point(find(i));
     }
 
     void unite(Point x, Point y)
@@ -129,18 +138,24 @@ private:
     {
         return (p.y() * num_cols_) + p.x();
     }
+
+    Point index_to_point(int i)
+    {
+        return Point{i % num_cols_, i / num_cols_};
+    }
 };
 
 class Region
 {
-    std::shared_ptr<const Board> board_;
-    set<Point> points_;
+    Point repr_;
     char id_;
+    size_t area_;
     size_t perimeter_;
+    size_t num_sides_;
 
 public:
-    Region(const shared_ptr<const Board>& board, set<Point>&& points, char id, size_t perimeter)
-        : board_(board), points_(move(points)), id_(id), perimeter_(perimeter)
+    Region(Point repr, char id, size_t area, size_t perimeter, size_t num_sides)
+        : repr_(repr), id_(id), area_(area), perimeter_(perimeter), num_sides_(num_sides)
     {
     }
 
@@ -154,7 +169,7 @@ public:
 
     size_t area() const
     {
-        return points_.size();
+        return area_;
     }
 
     size_t perimeter() const
@@ -162,145 +177,84 @@ public:
         return perimeter_;
     }
 
-    size_t count_sides() const
+    size_t num_sides() const
     {
-        // Walk the perimeter of the region, counting the number of sides.
-        // Each time we change direction, we'll increment the number of sides.
-        // Starting with the least element in the region will allow us to
-        // always begin going "right", because the smallest point will always
-        // be a top-left corner.
-
-        Point min = *points_.begin();
-
-        auto next_dir = [](Point d) {
-            if (d == Dir::RIGHT) return Dir::DOWN;
-            if (d == Dir::DOWN) return Dir::LEFT;
-            if (d == Dir::LEFT) return Dir::UP;
-            if (d == Dir::UP) return Dir::RIGHT;
-            throw "Invalid direction";
-        };
-
-        auto prev_dir = [](Point d) {
-            if (d == Dir::RIGHT) return Dir::UP;
-            if (d == Dir::DOWN) return Dir::RIGHT;
-            if (d == Dir::LEFT) return Dir::DOWN;
-            if (d == Dir::UP) return Dir::LEFT;
-            throw "Invalid direction";
-        };
-
-        // I'm not confident that this loop will terminate, so let's keep
-        // a set of point+direction pairs that we've visited.
-        set<pair<Point, Point>> visited;
-
-        // hackity hack - we don't have a great way to detect "holes" in a region,
-        // so we will keep track of each "outside" ID we encounter while establishing
-        // the perimeter.  If, at the end, there's only one, then this region is
-        // surrounded and so we'll double the number of sides returned.  Yes, it's
-        // gross, but it will make our summation work.
-        set<char> surrounding_ids;
-        set<Point> surrounding_points;
-
-        size_t num_sides = 0;
-        Point cur = min;
-        Point dir = Dir::RIGHT;
-        do
-        {
-            Point left = cur + prev_dir(dir);
-            Point straight = cur + dir;
-
-            if (auto [_, inserted] = visited.insert({cur, dir}); !inserted)
-            {
-                // we've visited this point in this direction before
-                dbg() << "I haz an infinite loop :( point=" << cur << " dir=" << dir << endl;
-                throw std::logic_error{"Infinite loop detected"};
-            }
-
-            // even if 'left_id' is the out-of-bounds sentinel, we still want to
-            // add it to the set of surrounding IDs.  Regions touching the edge of
-            // the board are, for our purposes, not wholly surrounded by another region.
-
-            char left_id = board_->in_bounds(left) ? board_->at(left) : '*';
-            if (left_id != id_)
-            {
-                surrounding_ids.insert(left_id);
-            }
-
-            if (left_id == id_)
-            {
-                dbg(LogLevel::DEBUG) << "turning left" << endl;
-                cur = left;
-                dir = prev_dir(dir);
-                ++num_sides;
-            }
-            else if (board_->in_bounds(straight) && board_->at(straight) == id_)
-            {
-                dbg(LogLevel::DEBUG) << "going straight" << endl;
-                cur = straight;
-                // no direction change, so don't increment sides
-            }
-            else
-            {
-                // we can't turn left, or go straight, so we must turn right
-                dbg(LogLevel::DEBUG) << "turning right" << endl;
-                dir = next_dir(dir);
-                ++num_sides;
-            }
-        } while (cur != min || dir != Dir::RIGHT);
-
-        dbg(LogLevel::DEBUG) << "num_sides: id=" << id_ << " num_sides=" << num_sides << endl;
-
-        if (surrounding_ids.size() == 1)
-        {
-            dbg() << "region " << id() << " at " << min << " is surrounded!" << endl;
-            return num_sides * 2;
-        }
-
-        return num_sides;
+        return num_sides_;
     }
 };
 
-shared_ptr<Region> explore_region(const shared_ptr<const Board>& board, unordered_set<Point>& visited, char id, Point origin)
+shared_ptr<Region> make_region(UnionFind& uf, const shared_ptr<const Board>& board, const set<Point>& points, char id)
 {
-    deque<Point> q;
-    q.push_back(origin);
+    // we'll count the area, perimeter, and number of sides here in advance.
 
-    set<Point> region_points;
+    size_t area = points.size();
 
     size_t perimeter = 0;
-    while (!q.empty())
+    size_t sides = 0;
+    int max_x = -1;
+    int min_x = numeric_limits<int>::max();
+    int max_y = -1;
+    int min_y = numeric_limits<int>::max();
+
+    for (const auto& p : points)
     {
-        Point p = q.front();
-        q.pop_front();
+        if (p.x() < min_x) min_x = p.x();
+        if (p.x() > max_x) max_x = p.x();
+        if (p.y() < min_y) min_y = p.y();
+        if (p.y() > max_y) max_y = p.y();
 
-        if (auto [_, inserted] = visited.insert(p); !inserted)
-        {
-            continue;
-        }
-
-        region_points.insert(p);
         perimeter += 4;
-
         for (const auto neighbor : board->cardinal_neighbors(p))
         {
             if (board->at(neighbor) == id)
             {
                 perimeter--;
-                q.push_back(neighbor);
             }
         }
     }
 
-    return make_shared<Region>(board, move(region_points), id, perimeter);
+    Point repr = uf.find(*points.begin());
+    for (int y = min_y - 1; y < max_y + 1; ++y)
+    {
+        for (int x = min_x - 1; x < max_x + 1; ++x)
+        {
+            // check for corners
+            // corners can look like:
+            //
+            // x.    xx    .x
+            // .. or x. or x.
+            //
+            // that last configuration is actually two corners, _provided that_ two opposing corners
+            // are in-group.
+
+            size_t num_us = 0;
+
+            auto r1 = uf.find({x, y});         // upper left
+            auto r2 = uf.find({x + 1, y});     // upper right
+            auto r3 = uf.find({x, y + 1});     // lower left
+            auto r4 = uf.find({x + 1, y + 1}); // lower right
+
+            if (r1 == repr) ++num_us;
+            if (r2 == repr) ++num_us;
+            if (r3 == repr) ++num_us;
+            if (r4 == repr) ++num_us;
+
+            if (num_us == 1 || num_us == 3)
+            {
+                ++sides;
+            }
+            else if (num_us == 2 && (r1 == r4 || r2 == r3))
+            {
+                sides += 2;
+            }
+        }
+    }
+
+    return make_shared<Region>(repr, id, area, perimeter, sides);
 }
 
-} // namespace
-
-string PartOne::solve()
+vector<shared_ptr<Region>> find_regions(const shared_ptr<const Board>& board)
 {
-    const shared_ptr<const Board> board = read_board();
-    unordered_set<Point> visited;
-    vector<shared_ptr<Region>> regions;
-
     UnionFind uf{board->num_rows(), board->num_cols()};
     for (int y = 0; y < board->num_rows(); ++y)
     {
@@ -322,16 +276,32 @@ string PartOne::solve()
         }
     }
 
-    for (auto p : board->all_points())
+    unordered_map<Point, set<Point>> regions_by_point;
+    for (Point p : board->all_points())
     {
-        if (auto it = visited.find(p); it != visited.end())
-        {
-            continue;
-        }
-
-        char id = board->at(p);
-        regions.push_back(explore_region(board, visited, id, p));
+        Point root = uf.find(p);
+        regions_by_point[root].insert(p);
     }
+
+    vector<shared_ptr<Region>> regions;
+    regions.reserve(regions_by_point.size());
+
+    for (auto& [root, points] : regions_by_point)
+    {
+        char id = board->at(root);
+        auto region = make_region(uf, board, points, id);
+        regions.push_back(region);
+    }
+
+    return regions;
+}
+
+} // namespace
+
+string PartOne::solve()
+{
+    const shared_ptr<const Board> board = read_board();
+    const vector<shared_ptr<Region>> regions = find_regions(board);
 
     auto total_price = transform_reduce(
         regions.begin(), regions.end(),
@@ -345,28 +315,18 @@ string PartOne::solve()
 
 string PartTwo::solve()
 {
+    // 750xxx is too low
+    // 827988 is too high
+    // next guess: 815788
+
     auto board = read_board();
-    unordered_set<Point> visited;
-    vector<shared_ptr<Region>> regions;
-
-    unordered_map<Point, shared_ptr<Region>> regions_by_point;
-
-    for (auto p : board->all_points())
-    {
-        if (auto it = visited.find(p); it != visited.end())
-        {
-            continue;
-        }
-
-        char id = board->at(p);
-        regions.push_back(explore_region(board, visited, id, p));
-    }
+    const vector<shared_ptr<Region>> regions = find_regions(board);
 
     auto total_price = transform_reduce(
         regions.begin(), regions.end(),
         static_cast<uintmax_t>(0),
         plus<>{},
-        [](const auto& r) { return static_cast<uintmax_t>(r->area()) * r->count_sides(); }
+        [](const auto& r) { return static_cast<uintmax_t>(r->area()) * r->num_sides(); }
     );
 
     return to_string(total_price);
