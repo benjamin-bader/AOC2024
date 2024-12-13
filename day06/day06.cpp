@@ -37,8 +37,7 @@ constexpr const char* kTestInput = R"(
 .#..^.....
 ........#.
 #.........
-......#...
-)";
+......#...)";
 
 unique_ptr<istream> get_input()
 {
