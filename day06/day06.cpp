@@ -16,6 +16,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <version>
 
 using namespace std;
 
@@ -108,7 +109,7 @@ WalkResult walk(const Board& board, Point start, Point dir, Point obstacle = Poi
         }
     }
 
-    return {move(visited), false};
+    return {std::move(visited), false};
 }
 
 } // namespace
@@ -138,7 +139,9 @@ string PartTwo::solve()
 
 
     auto num_loops = transform_reduce(
+#if __cpp_lib_parallel_algorithm
         execution::par_unseq,
+#endif
         simple_path_points.begin(), simple_path_points.end(),
         0,
         plus<>{},

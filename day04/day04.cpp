@@ -49,7 +49,7 @@ Board read_board()
 {
     auto input = get_input();
     auto board = parsers::Lines(*input, [](string s) { return vector<char>(s.cbegin(), s.cend()); });
-    return {move(board)};
+    return {std::move(board)};
 }
 
 bool find_xmas(const Board& board, Point cur, Point dir, string_view next)

@@ -149,10 +149,10 @@ pair<Rules, vector<Update>> read_input()
             update.push_back(stoi(page_string));
         }
 
-        updates.push_back(move(update));
+        updates.push_back(std::move(update));
     }
 
-    return {move(rules), move(updates)};
+    return {std::move(rules), std::move(updates)};
 }
 
 } // namespace

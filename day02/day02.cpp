@@ -99,7 +99,7 @@ bool is_safe_with_dampener(const Report& xs)
     for (size_t i = 0; i < xs.size(); i++)
     {
         Report modified_xs = xs;
-        modified_xs.erase(modified_xs.begin() + i);
+        modified_xs.erase(modified_xs.begin() + static_cast<long>(i));
         if (is_safe(modified_xs)) return true;
     }
 

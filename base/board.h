@@ -3,6 +3,7 @@
 #include "point.h"
 
 #include <array>
+#include <cassert>
 #include <iostream>
 #include <ranges>
 #include <vector>
@@ -48,22 +49,30 @@ public:
 
     T at(const Point& p) const
     {
-        return contents_[p.y()][p.x()];
+        assert(p.x() >= 0);
+        assert(p.y() >= 0);
+        return contents_[static_cast<size_t>(p.y())][static_cast<size_t>(p.x())];
     }
 
     T& at(const Point& p)
     {
-        return contents_[p.y()][p.x()];
+        assert(p.x() >= 0);
+        assert(p.y() >= 0);
+        return contents_[static_cast<size_t>(p.y())][static_cast<size_t>(p.x())];
     }
 
     const T& operator[](const Point& p) const
     {
-        return contents_[p.y()][p.x()];
+        assert(p.x() >= 0);
+        assert(p.y() >= 0);
+        return contents_[static_cast<size_t>(p.y())][static_cast<size_t>(p.x())];
     }
 
     T& operator[](const Point& p)
     {
-        return contents_[p.y()][p.x()];
+        assert(p.x() >= 0);
+        assert(p.y() >= 0);
+        return contents_[static_cast<size_t>(p.y())][static_cast<size_t>(p.x())];
     }
 
     bool in_bounds(Point p) const

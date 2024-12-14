@@ -44,6 +44,7 @@ MIIISIJEEE
 MMMISSJEEE)";
 
 // claimed to be 436
+[[maybe_unused]]
 constexpr const char* kRedditSuggestion = R"(
 0.000
 00.00
@@ -148,12 +149,12 @@ private:
 
     size_t point_to_index(Point p)
     {
-        return (static_cast<size_t>(p.y()) * num_cols_) + static_cast<size_t>(p.x());
+        return static_cast<size_t>(p.y() * num_cols_) + static_cast<size_t>(p.x());
     }
 
     Point index_to_point(size_t i)
     {
-        return Point{static_cast<int>(i % num_cols_), static_cast<int>(i / num_cols_)};
+        return Point{static_cast<int>(i) % num_cols_, static_cast<int>(i) / num_cols_};
     }
 };
 

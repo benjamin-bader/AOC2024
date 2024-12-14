@@ -53,8 +53,10 @@ string PartOne::solve()
     sort(left.begin(), left.end());
     sort(right.begin(), right.end());
 
-    auto diff = [](int x, int y) { return abs(x - y); };
-    auto xs = views::zip_transform(diff, left, right);
+    auto diff = [](tuple<int, int> xy) { return abs(get<0>(xy) - get<1>(xy)); };
+
+    // we _were_ using zip_transform, but AppleClang sux and doesn't have it
+    auto xs = views::zip(left, right) | views::transform(diff);
     return to_string(accumulate(xs.begin(), xs.end(), 0L));
 }
 

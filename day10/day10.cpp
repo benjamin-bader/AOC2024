@@ -51,7 +51,7 @@ Board read_board()
 {
     auto input = get_input();
     auto lines = parsers::Lines(*input, parsers::Chars);
-    return {move(lines)};
+    return {std::move(lines)};
 }
 
 struct TrailHash

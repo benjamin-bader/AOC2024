@@ -166,7 +166,7 @@ public:
                 continue;
             }
 
-            size_t mul = blocks_[i].id() * i;
+            size_t mul = static_cast<size_t>(blocks_[i].id()) * i;
             if (sum + mul < sum)
             {
                 throw overflow_error{"Overflow"};
@@ -200,7 +200,7 @@ HardDrive make_from_repr(const string& repr)
 
     Blocks blocks(num_blocks);
 
-    unsigned int file_id = 0;
+    int file_id = 0;
     size_t it = 0;
 
     for (size_t i = 0; i < repr.size(); i += 2)
@@ -211,7 +211,7 @@ HardDrive make_from_repr(const string& repr)
         }
 
         // adjust for spaces
-        it += repr[i + 1] - '0';
+        it += static_cast<size_t>(repr[i + 1] - '0');
 
         file_id++;
     }

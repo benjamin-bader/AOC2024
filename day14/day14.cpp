@@ -155,7 +155,7 @@ int quadrant_for_pos(const Point& p, const Params& params)
 
 size_t find_tree(Problem& problem)
 {
-    vector<bool> grid(problem.params.h * problem.params.w, false);
+    vector<bool> grid(static_cast<size_t>(problem.params.h * problem.params.w), false);
 
     const auto as_coord = [&](const Point& p) {
         return static_cast<size_t>((p.y() * problem.params.h) + p.x());
@@ -239,9 +239,9 @@ string PartOne::solve()
     {
         Point p = predict_position(robot, problem.params);
         int q = quadrant_for_pos(p, problem.params);
-        if (q != -1)
+        if (q >= 0)
         {
-            quadrants[q]++;
+            quadrants[static_cast<size_t>(q)]++;
         }
     }
 

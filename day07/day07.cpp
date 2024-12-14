@@ -12,6 +12,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <version>
 
 using namespace std;
 
@@ -189,7 +190,9 @@ string PartTwo::solve()
     auto all_calibrations = read_input();
 
     uintmax_t sum = transform_reduce(
+#if __cpp_lib_parallel_algorithm
         std::execution::par_unseq,
+#endif
         all_calibrations.cbegin(), all_calibrations.cend(),
         0ULL,
         std::plus<>(),
