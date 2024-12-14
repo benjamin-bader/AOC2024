@@ -5,6 +5,7 @@
 #include "point.h"
 
 #include <algorithm>
+#include <cassert>
 #include <deque>
 #include <exception>
 #include <execution>
@@ -66,20 +67,20 @@ shared_ptr<Board> read_board()
     auto input = get_input();
     auto lines = parsers::Lines(*input, parsers::Chars);
 
-    return make_shared<Board>(move(lines));
+    return make_shared<Board>(std::move(lines));
 }
 
 class UnionFind
 {
-    vector<int> parent_;
-    vector<int> rank_;
+    vector<size_t> parent_;
+    vector<size_t> rank_;
     int num_rows_;
     int num_cols_;
 
 public:
     UnionFind(int num_rows, int num_cols)
-        : parent_(num_rows * num_cols)
-        , rank_(num_rows * num_cols, 1)
+        : parent_(static_cast<size_t>(num_rows * num_cols))
+        , rank_(static_cast<size_t>(num_rows * num_cols), 1)
         , num_rows_(num_rows)
         , num_cols_(num_cols)
     {
@@ -88,24 +89,35 @@ public:
 
     Point find(Point p)
     {
-        if (p.x() < 0 || p.x() >= num_cols_ || p.y() < 0 || p.y() >= num_rows_)
+        if (!in_bounds(p))
         {
             return {-1, -1};
         }
 
-        int i = point_to_index(p);
+        size_t i = point_to_index(p);
         return index_to_point(find(i));
     }
 
     void unite(Point x, Point y)
     {
-        int ix = point_to_index(x);
-        int iy = point_to_index(y);
+        assert(in_bounds(x));
+        assert(in_bounds(y));
+
+        size_t ix = point_to_index(x);
+        size_t iy = point_to_index(y);
         unite(ix, iy);
     }
 
 private:
-    int find(int i)
+    bool in_bounds(const Point& p) const
+    {
+        return p.x() >= 0
+            && p.x() < num_cols_
+            && p.y() >= 0
+            && p.y() < num_rows_;
+    }
+
+    size_t find(size_t i)
     {
         if (parent_[i] == i)
         {
@@ -115,10 +127,10 @@ private:
         return parent_[i] = find(parent_[i]);
     }
 
-    void unite(int x, int y)
+    void unite(size_t x, size_t y)
     {
-        int rx = find(x);
-        int ry = find(y);
+        size_t rx = find(x);
+        size_t ry = find(y);
 
         if (rx == ry)
         {
@@ -134,14 +146,14 @@ private:
         rank_[rx] += rank_[ry];
     }
 
-    int point_to_index(Point p)
+    size_t point_to_index(Point p)
     {
-        return (p.y() * num_cols_) + p.x();
+        return (static_cast<size_t>(p.y()) * num_cols_) + static_cast<size_t>(p.x());
     }
 
-    Point index_to_point(int i)
+    Point index_to_point(size_t i)
     {
-        return Point{i % num_cols_, i / num_cols_};
+        return Point{static_cast<int>(i % num_cols_), static_cast<int>(i / num_cols_)};
     }
 };
 

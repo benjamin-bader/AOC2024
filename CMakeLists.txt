@@ -26,6 +26,11 @@ target_sources(aoc2024
 
 add_warnings(aoc2024)
 
+# GCC and Clang
+if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+    target_link_options(aoc2024 PRIVATE LINKER:-no_warn_duplicate_libraries)
+endif()
+
 set(DAYS )
 macro(add_day DAY)
     add_subdirectory(${DAY})

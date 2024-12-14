@@ -19,18 +19,8 @@ using Parser = TOut (*)(TIn);
 
 inline std::vector<std::string> Lines(std::istream& in)
 {
-    while (true)
-    {
-        int ch = in.peek();
-        if (ch == '\r' || ch == '\n' || ch == ' ' || ch == '\t')
-        {
-            in.ignore(1, ch);
-        }
-        else
-        {
-            break;
-        }
-    }
+    // eat leading whitespace
+    in >> std::ws;
 
     std::vector<std::string> lines;
     std::string line;
@@ -52,18 +42,8 @@ inline std::vector<std::string> Lines(const std::string& s)
 template <typename F>
 std::vector<std::invoke_result_t<F, std::string>> Lines(std::istream& in, F&& fn)
 {
-    while (true)
-    {
-        int ch = in.peek();
-        if (ch == '\r' || ch == '\n' || ch == ' ' || ch == '\t')
-        {
-            in.ignore(1, ch);
-        }
-        else
-        {
-            break;
-        }
-    }
+    // eat leading whitespace
+    in >> std::ws;
 
     std::vector<std::invoke_result_t<F, std::string>> lines;
     std::string line;
@@ -86,6 +66,9 @@ std::vector<std::invoke_result_t<F, std::string>> Lines(const std::string& s, F&
 
 inline std::string String(std::istream& in)
 {
+    // eat leading whitespace
+    in >> std::ws;
+
     std::stringstream ss;
     ss << in.rdbuf();
 

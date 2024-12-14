@@ -1,6 +1,9 @@
 #include "day13.h"
 
+#include "point.h"
+
 #include <algorithm>
+#include <cassert>
 #include <exception>
 #include <fstream>
 #include <iomanip>
@@ -49,18 +52,13 @@ Button A: X+69, Y+23
 Button B: X+27, Y+71
 Prize: X=18641, Y=10279)";
 
-constexpr const char* kShortTestInput = R"(
-Button A: X+94, Y+34
-Button B: X+22, Y+67
-Prize: X=8400, Y=5400)";
-
-using Point = pair<long long, long long>;
+using Point64 = BasicPoint<int64_t>;
 
 struct System
 {
-    Point button_a;
-    Point button_b;
-    Point prize;
+    Point64 button_a;
+    Point64 button_b;
+    Point64 prize;
 };
 
 [[maybe_unused]]
@@ -91,23 +89,12 @@ vector<System> read_input()
         smatch sm;
 
         // chew up whitespace
-        while (true)
-        {
-            int ch = input->peek();
-            if (ch == '\r' || ch == '\n' || ch == ' ' || ch == '\t')
-            {
-                input->ignore(1, ch);
-            }
-            else
-            {
-                break;
-            }
-        }
+        *input >> ws;
 
-        // First button
+        // First button, or EOF
         if (!getline(*input, line))
         {
-            throw invalid_argument{"Unexpected end of input"};;
+            break;
         }
 
         if (!regex_match(line, sm, expr_a))
@@ -141,32 +128,28 @@ vector<System> read_input()
         system.prize = {stoi(sm[1]), stoi(sm[2])};
 
         systems.push_back(system);
-
-        if (!getline(*input, line))
-        {
-            break;
-        }
     }
 
     return systems;
 }
 
-size_t count_min_tokens(long long xy_offset = 0)
+size_t count_min_tokens(int64_t xy_offset = 0)
 {
     auto systems = read_input();
     if (xy_offset > 0)
     {
+        Point64 off{xy_offset, xy_offset};
         for (auto& system : systems)
         {
-            system.prize = {system.prize.first + xy_offset, system.prize.second + xy_offset};
+            system.prize = system.prize + off;
         }
     }
 
     size_t sum = 0;
     for (const auto& system : systems) {
-        const Point& a = system.button_a;
-        const Point& b = system.button_b;
-        const Point& p = system.prize;
+        const Point64& a = system.button_a;
+        const Point64& b = system.button_b;
+        const Point64& p = system.prize;
 
         // we've got a system of equations here:
         // M*button_a.x + N*button_b.x = prize.x
@@ -191,22 +174,24 @@ size_t count_min_tokens(long long xy_offset = 0)
         // and Dy is
         // [ MXa  Pa ]
         // [ NXb  Pb ]
-        auto det = (a.first * b.second) - (a.second * b.first);
+        auto det = (a.x() * b.y()) - (a.y() * b.x());
         if (det == 0)
         {
             dbg() << "whoopsie daisy" << endl;
             throw invalid_argument{"Determinant is zero"};
         }
 
-        auto det_m = (p.first * b.second) - (p.second * b.first);
-        auto det_n = (a.first * p.second) - (a.second * p.first);
+        auto det_m = (p.x() * b.y()) - (p.y() * b.x());
+        auto det_n = (a.x() * p.y()) - (a.y() * p.x());
 
         // integer truncation could happen, we'll check for it by multiplying
         // and validating that we get the expected prize coordinate value.
         auto m = det_m / det;
         auto n = det_n / det;
 
-        bool valid_solution = (m * a.first + n * b.first == p.first) && (m * a.second + n * b.second == p.second);
+        bool valid_solution =
+            (m * a.x() + n * b.x() == p.x()) &&
+            (m * a.y() + n * b.y() == p.y());
 
         dbg() << "m: " << m << ", n: " << n << " valid: " << boolalpha << valid_solution << endl;
 
@@ -215,7 +200,10 @@ size_t count_min_tokens(long long xy_offset = 0)
             // Per the puzzle statement, pressing A costs three tokens and B costs one.
             size_t cost_a = 3;
             size_t cost_b = 1;
-            sum += (m * cost_a) + (n * cost_b);
+
+            assert(m >= 0);
+            assert(n >= 0);
+            sum += (static_cast<size_t>(m) * cost_a) + (static_cast<size_t>(n) * cost_b);
         }
     }
     return sum;

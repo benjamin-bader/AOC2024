@@ -56,8 +56,8 @@ struct Calibration
     uintmax_t expected;
     vector<uintmax_t> values;
 
-    Calibration(uintmax_t expected, vector<uintmax_t> values)
-        : expected(expected), values(move(values))
+    Calibration(uintmax_t expected, vector<uintmax_t>&& values)
+        : expected(expected), values(std::move(values))
     {
     }
 
@@ -154,7 +154,7 @@ Calibration parse_calibration(const string& line)
         values.push_back(value);
     }
 
-    return Calibration(expected, move(values));
+    return Calibration(expected, std::move(values));
 }
 
 vector<Calibration> read_input()

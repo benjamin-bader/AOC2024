@@ -56,7 +56,7 @@ class HardDrive
 
 public:
     HardDrive(Blocks&& files_and_space)
-        : blocks_(move(files_and_space))
+        : blocks_(std::move(files_and_space))
     {
         if (blocks_.empty())
         {
@@ -123,7 +123,7 @@ public:
             ++f;
 
             // CONDITION: block_size >= 1
-            
+
             // now we know how big the file is; find the left-most block of spaces that will fit it.
             for (size_t s = 0; s < f; s++)
             {
@@ -216,7 +216,7 @@ HardDrive make_from_repr(const string& repr)
         file_id++;
     }
 
-    return HardDrive{move(blocks)};
+    return HardDrive{std::move(blocks)};
 }
 
 constexpr const char* kInputFile = "day09/day09.input";

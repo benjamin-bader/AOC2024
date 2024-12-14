@@ -3,48 +3,51 @@
 #include "hash.h"
 
 #include <array>
+#include <concepts>
 #include <iostream>
 #include <numeric>
 
-class Point
+template <std::signed_integral T>
+class BasicPoint
 {
-    int x_;
-    int y_;
+    T x_;
+    T y_;
 
 public:
 
-    constexpr Point() : Point(0, 0) {}
-    constexpr Point(int x, int y) : x_(x), y_(y) {}
-    constexpr Point(const Point&) = default;
-    constexpr Point(Point&&) noexcept = default;
+    constexpr BasicPoint() : BasicPoint(0, 0) {}
+    constexpr BasicPoint(T x, T y) : x_(x), y_(y) {}
+    constexpr BasicPoint(const BasicPoint&) = default;
+    constexpr BasicPoint(BasicPoint&&) noexcept = default;
 
-    Point& operator=(const Point&) = default;
-    Point& operator=(Point&&) noexcept = default;
+    BasicPoint& operator=(const BasicPoint&) = default;
+    BasicPoint& operator=(BasicPoint&&) noexcept = default;
 
-    constexpr int x() const
+    constexpr T x() const
     {
         return x_;
     }
 
-    constexpr int y() const
+    constexpr T y() const
     {
         return y_;
     }
 
-    constexpr Point operator+(const Point& other) const
+    constexpr BasicPoint operator+(const BasicPoint& other) const
     {
         return {x_ + other.x_, y_ + other.y_};
     }
 
-    constexpr Point operator-(const Point& other) const
+    constexpr BasicPoint operator-(const BasicPoint& other) const
     {
         return {x_ - other.x_, y_ - other.y_};
     }
 
-    constexpr auto operator<=>(const Point& other) const = default;
+    constexpr auto operator<=>(const BasicPoint& other) const = default;
 };
 
-inline std::ostream& operator<<(std::ostream& os, const Point& p)
+template <std::signed_integral T>
+std::ostream& operator<<(std::ostream& os, const BasicPoint<T>& p)
 {
     return os << "(" << p.x() << ", " << p.y() << ")";
 }
@@ -52,10 +55,10 @@ inline std::ostream& operator<<(std::ostream& os, const Point& p)
 namespace std
 {
 
-template <>
-struct hash<Point>
+template <std::signed_integral T>
+struct hash<BasicPoint<T>>
 {
-    size_t operator()(const Point& p) const
+    size_t operator()(const BasicPoint<T>& p) const
     {
         size_t seed = 1;
         hash_combine(seed, p.x());
@@ -65,6 +68,8 @@ struct hash<Point>
 };
 
 } // namespace std
+
+using Point = BasicPoint<int>;
 
 namespace Dir
 {
