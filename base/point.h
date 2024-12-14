@@ -81,4 +81,6 @@ constexpr Point RIGHT{1, 0};
 
 constexpr const auto CARDINALS = std::array {UP, RIGHT, DOWN, LEFT };
 
+constexpr const auto ALL = std::array {UP, RIGHT, DOWN, LEFT, UP + RIGHT, UP + LEFT, DOWN + RIGHT, DOWN + LEFT};
+
 } // namespace Dir

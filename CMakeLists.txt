@@ -26,8 +26,10 @@ target_sources(aoc2024
 
 add_warnings(aoc2024)
 
-# GCC and Clang
-if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+# GCC and Clang on macOS both spuriously warn about duplicate 'base' libraries,
+# so we suppress that warning.  GCC doesn't warn about this on linux in CI, for
+# whatever reason, so we'll only suppress it on Apple platforms.
+if(APPLE)
     target_link_options(aoc2024 PRIVATE LINKER:-no_warn_duplicate_libraries)
 endif()
 
