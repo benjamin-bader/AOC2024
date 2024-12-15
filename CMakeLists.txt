@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(aoc2024 VERSION 0.1.0 LANGUAGES CXX)
 
+option(SANITIZE "Enable AddressSanitizer" OFF)
+
 macro(add_warnings TARGET)
     target_compile_options(
         "${TARGET}"
@@ -33,11 +35,25 @@ if(APPLE)
     target_link_options(aoc2024 PRIVATE LINKER:-no_warn_duplicate_libraries)
 endif()
 
+if(SANITIZE)
+    target_compile_options(aoc2024 PRIVATE -fsanitize=address -fno-sanitize-recover=all)
+    target_link_options(aoc2024 PRIVATE -fsanitize=address LINKER:-no_warn_duplicate_libraries)
+endif()
+
 set(DAYS )
 macro(add_day DAY)
     add_subdirectory(${DAY})
     target_link_libraries(aoc2024 PRIVATE ${DAY})
     list(APPEND DAYS "${DAY}")
+
+    if(APPLE)
+        target_link_options(${DAY} PRIVATE LINKER:-no_warn_duplicate_libraries)
+    endif()
+
+    if(SANITIZE)
+        target_compile_options(${DAY} PRIVATE -fsanitize=address -fno-sanitize-recover=all)
+        target_link_options(${DAY} PRIVATE -fsanitize=address LINKER:-no_warn_duplicate_libraries)
+    endif()
 endmacro()
 
 macro(generate_solutions)

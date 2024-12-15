@@ -158,7 +158,7 @@ size_t find_tree(Problem& problem)
     vector<bool> grid(static_cast<size_t>(problem.params.h * problem.params.w), false);
 
     const auto as_coord = [&](const Point& p) {
-        return static_cast<size_t>((p.y() * problem.params.h) + p.x());
+        return static_cast<size_t>((p.y() * problem.params.w) + p.x());
     };
 
     const auto print = [&]() {
@@ -208,8 +208,7 @@ size_t find_tree(Problem& problem)
         for (auto& robot : problem.robots)
         {
             robot.p = predict_position(robot, problem.params);
-            size_t coord = static_cast<size_t>((robot.p.y() * problem.params.h) + robot.p.x());
-            grid[coord] = true;
+            grid[as_coord(robot.p)] = true;
         }
 
         for (const auto& robot : problem.robots)
