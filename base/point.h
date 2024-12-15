@@ -38,9 +38,23 @@ public:
         return {x_ + other.x_, y_ + other.y_};
     }
 
+    BasicPoint& operator+=(const BasicPoint& other)
+    {
+        x_ += other.x_;
+        y_ += other.y_;
+        return *this;
+    }
+
     constexpr BasicPoint operator-(const BasicPoint& other) const
     {
         return {x_ - other.x_, y_ - other.y_};
+    }
+
+    BasicPoint& operator-=(const BasicPoint& other)
+    {
+        x_ -= other.x_;
+        y_ -= other.y_;
+        return *this;
     }
 
     constexpr auto operator<=>(const BasicPoint& other) const = default;
