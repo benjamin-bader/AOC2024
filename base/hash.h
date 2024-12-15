@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional> // for std::hash
 #include <numeric>
 #include <utility>
 

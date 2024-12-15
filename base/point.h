@@ -97,4 +97,14 @@ constexpr const auto CARDINALS = std::array {UP, RIGHT, DOWN, LEFT };
 
 constexpr const auto ALL = std::array {UP, RIGHT, DOWN, LEFT, UP + RIGHT, UP + LEFT, DOWN + RIGHT, DOWN + LEFT};
 
+constexpr bool is_vertical(const Point& p)
+{
+    return p.x() == 0;
+}
+
+constexpr bool is_horizontal(const Point& p)
+{
+    return p.y() == 0;
+}
+
 } // namespace Dir

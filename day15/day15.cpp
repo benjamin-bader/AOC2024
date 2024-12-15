@@ -1,7 +1,6 @@
 #include "day15.h"
 
 #include "board.h"
-#include "parsers.h"
 #include "point.h"
 
 #include <algorithm>
@@ -82,10 +81,24 @@ public:
         }
     }
 
+    void apply_all_steps_wide()
+    {
+        for (char c : steps_)
+        {
+            Point d = dir_from_char(c);
+            if (can_move(robot_, d))
+            {
+                move_wide(robot_, d);
+                robot_ += d;
+            }
+            dbg(LogLevel::DEBUG) << "After step " << c << endl << *this << endl;
+        }
+    }
+
     uintmax_t gps() const
     {
         vector<Point> boxes = board_.all_points()
-            | views::filter([this](auto p) { return board_[p] == 'O'; })
+            | views::filter([this](auto p) { return board_[p] == 'O' || board_[p] == '['; })
             | ranges::to<vector<Point>>();
 
         return transform_reduce(
@@ -106,6 +119,60 @@ private:
             case 'v': return Dir::DOWN;
             case '<': return Dir::LEFT;
             default: throw invalid_argument("Invalid direction character");
+        }
+    }
+
+    bool can_move(Point p, Point dir)
+    {
+        Point next = p + dir;
+
+        char c_next = board_[next];
+        if (c_next == '#')
+        {
+            return false;
+        }
+
+        if (c_next == '.')
+        {
+            return true;
+        }
+
+        if (c_next == '[')
+        {
+            return can_move(next, dir) && (dir == Dir::LEFT || can_move(next + Dir::RIGHT, dir));
+        }
+
+        if (c_next == ']')
+        {
+            return can_move(next, dir) && (dir == Dir::RIGHT || can_move(next + Dir::LEFT, dir));
+        }
+
+        throw invalid_argument("Invalid board state");
+    }
+
+    void move_wide(Point p, Point dir)
+    {
+        // PRECONDITION: can_move has already returned true
+
+        Point next = p + dir;
+
+        char n = board_[next];
+
+        if (n == '.')
+        {
+            swap(board_[p], board_[next]);
+        }
+        else if (n == '[')
+        {
+            move_wide(next, dir);
+            if (Dir::is_vertical(dir)) move_wide(next + Dir::RIGHT, dir);
+            swap(board_[p], board_[next]);
+        }
+        else if (n == ']')
+        {
+            move_wide(next, dir);
+            if (Dir::is_vertical(dir)) move_wide(next + Dir::LEFT, dir);
+            swap(board_[p], board_[next]);
         }
     }
 };
@@ -204,6 +271,66 @@ Warehouse read_input()
     return {std::move(board), std::move(steps), robot};
 }
 
+Warehouse read_wide_input()
+{
+    auto input = get_input();
+
+    *input >> ws;
+
+    vector<vector<char>> lines;
+    string line;
+    while (getline(*input, line) && !line.empty())
+    {
+        vector<char> wide_line;
+        wide_line.reserve(line.size() * 2);
+
+        for (char c : line)
+        {
+            switch (c)
+            {
+            case '#':
+                wide_line.push_back('#');
+                wide_line.push_back('#');
+                break;
+            case '.':
+                wide_line.push_back('.');
+                wide_line.push_back('.');
+                break;
+            case 'O':
+                wide_line.push_back('[');
+                wide_line.push_back(']');
+                break;
+            case '@':
+                wide_line.push_back('@');
+                wide_line.push_back('.');
+                break;
+            }
+        }
+
+        lines.push_back(std::move(wide_line));
+    }
+
+    string steps;
+    while (getline(*input, line))
+    {
+        steps += line;
+    }
+
+    Board board{std::move(lines)};
+
+    Point robot;
+    for (Point p : board.all_points())
+    {
+        if (board[p] == '@')
+        {
+            robot = p;
+            break;
+        }
+    }
+
+    return {std::move(board), std::move(steps), robot};
+}
+
 } // namespace
 
 string PartOne::solve()
@@ -217,7 +344,11 @@ string PartOne::solve()
 
 string PartTwo::solve()
 {
-    return "TODO";
+    Warehouse w = read_wide_input();
+    dbg() << "Before" << endl << w << endl;
+    w.apply_all_steps_wide();
+    dbg() << "After" << endl << w << endl;
+    return to_string(w.gps());
 }
 
 } // namespace day15
