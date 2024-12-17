@@ -97,6 +97,16 @@ constexpr const auto CARDINALS = std::array {UP, RIGHT, DOWN, LEFT };
 
 constexpr const auto ALL = std::array {UP, RIGHT, DOWN, LEFT, UP + RIGHT, UP + LEFT, DOWN + RIGHT, DOWN + LEFT};
 
+constexpr const Point turn_left(const Point& p)
+{
+    return {p.y(), -p.x()};
+}
+
+constexpr const Point turn_right(const Point& p)
+{
+    return {-p.y(), p.x()};
+}
+
 constexpr bool is_vertical(const Point& p)
 {
     return p.x() == 0;

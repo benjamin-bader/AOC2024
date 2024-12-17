@@ -6,6 +6,7 @@
 #include <cassert>
 #include <iostream>
 #include <ranges>
+#include <string>
 #include <vector>
 
 template <typename T>
@@ -18,7 +19,16 @@ class BasicBoard
     template <typename U>
     friend std::ostream& operator<<(std::ostream& os, const BasicBoard<U>& board);
 
+    template <typename U>
+    friend std::istream& operator>>(std::istream& is, BasicBoard<U>& board);
+
 public:
+    BasicBoard()
+        : contents_{}
+        , num_rows_{0}
+        , num_cols_{0}
+    {}
+
     BasicBoard(const std::vector<std::vector<T>>& contents)
         : contents_(contents)
         , num_rows_(static_cast<int>(contents.size()))
@@ -117,6 +127,23 @@ std::ostream& operator<<(std::ostream& out, const BasicBoard<T>& board)
     }
 
     return out;
+}
+
+template <typename T>
+std::istream& operator>>(std::istream& in, BasicBoard<T>& board)
+{
+    in >> std::ws;
+
+    std::string line;
+    while (getline(in, line) && !line.empty())
+    {
+        board.contents_.emplace_back(line.begin(), line.end());
+    }
+
+    board.num_rows_ = static_cast<int>(board.contents_.size());
+    board.num_cols_ = static_cast<int>(board.contents_[0].size());
+
+    return in;
 }
 
 using Board = BasicBoard<char>;
