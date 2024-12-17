@@ -100,12 +100,83 @@ struct Edge
     int length;
 };
 
-struct Graph
+class Graph
 {
     Point start;
     Point end;
     unordered_map<Point, vector<Edge>> edges;
     Board board;
+
+    unordered_map<Turtle, size_t> dist;
+    unordered_map<Turtle, vector<Turtle>> prev;
+    Turtle end_turtle;
+
+public:
+    Graph(const Board& board)
+        : start()
+        , end()
+        , edges()
+        , board(board)
+    {
+        for (auto p : board.all_points())
+        {
+            if (board[p] == 'S')
+            {
+                start = p;
+            }
+            else if (board[p] == 'E')
+            {
+                end = p;
+            }
+        }
+
+        auto can_move_to_side = [&board](Point p, Point d) {
+            Point left = p + Dir::turn_left(d);
+            Point right = p + Dir::turn_right(d);
+
+            return (board.in_bounds(left) && board[left] != '#') || (board.in_bounds(right) && board[right] != '#');
+        };
+
+        auto can_go_straight = [&board](Point p, Point d) {
+            Point next = p + d;
+            return board.in_bounds(next) && board[next] != '#';
+        };
+
+        // BFS to build the graph
+        deque<Point> q{start};
+        unordered_set<Point> visited;
+        while (!q.empty())
+        {
+            Point cur = q.front();
+            q.pop_front();
+
+            if (const auto [_, inserted] = visited.insert(cur); !inserted)
+            {
+                continue;
+            }
+
+            for (const auto& d : Dir::CARDINALS)
+            {
+                auto n = cur + d;
+                if (!board.in_bounds(n) || board[n] == '#')
+                {
+                    continue;
+                }
+
+                int weight = 1;
+
+                Point new_p = n;
+                while (can_go_straight(new_p, d) && !can_move_to_side(new_p, d))
+                {
+                    weight++;
+                    new_p += d;
+                }
+
+                edges[cur].push_back(Edge{cur, new_p, d, weight});
+                q.push_back(new_p);
+            }
+        }
+    }
 
     void draw(ostream& out, const unordered_set<Point>& path)
     {
@@ -126,284 +197,162 @@ struct Graph
             }
         }
     }
-};
 
-Graph build_graph(const Board& board)
-{
-    unordered_map<Point, vector<Edge>> graph;
-
-    Point start, end;
-    for (auto p : board.all_points())
+    pair<size_t, vector<Edge>> find_shortest_path()
     {
-        if (board[p] == 'S')
+        auto end_turtle = dijkstra();
+
+        vector<Edge> path;
+        Turtle to = end_turtle;
+        while (to.position() != start)
         {
-            start = p;
+            Turtle from = prev[to].front(); // just pick any old turtle, they're all the same cost
+            for (const auto& edge : edges.at(from.position()))
+            {
+                if (edge.to == to.position())
+                {
+                    path.push_back(edge);
+                    to = from;
+                    break;
+                }
+            }
         }
-        else if (board[p] == 'E')
+
+        reverse(path.begin(), path.end());
+
+        for (const auto& edge : path)
         {
-            end = p;
+            dbg() << edge.from << " -> " << edge.to << " (" << dist[{edge.to, edge.dir}] << ")" << endl;
         }
+
+        return {dist[end_turtle], path};
     }
 
-    auto can_move_to_side = [&board](Point p, Point d) {
-        Point left = p + Dir::turn_left(d);
-        Point right = p + Dir::turn_right(d);
-
-        return (board.in_bounds(left) && board[left] != '#') || (board.in_bounds(right) && board[right] != '#');
-    };
-
-    auto can_go_straight = [&board](Point p, Point d) {
-        Point next = p + d;
-        return board.in_bounds(next) && board[next] != '#';
-    };
-
-    // BFS to build the graph
-    deque<Point> q{start};
-    unordered_set<Point> visited;
-    while (!q.empty())
+    pair<size_t, unordered_set<Point>> find_all_shortest_path_points()
     {
-        Point cur = q.front();
-        q.pop_front();
+        auto end_turtle = dijkstra();
 
-        if (const auto [_, inserted] = visited.insert(cur); !inserted)
+        unordered_set<Point> result;
+        deque<Turtle> q{end_turtle};
+
+        vector<pair<Point, Point>> edges;
+        while (!q.empty())
         {
-            continue;
+            Turtle cur = q.front();
+            q.pop_front();
+
+            result.insert(cur.position());
+            for (auto& t : prev[cur])
+            {
+                edges.push_back({cur.position(), t.position()});
+                q.push_back(t);
+            }
         }
 
-        for (const auto& d : Dir::CARDINALS)
+        for (const auto& [lhs, rhs] : edges)
         {
-            auto n = cur + d;
-            if (!board.in_bounds(n) || board[n] == '#')
+            Point dir{clamp(rhs.x() - lhs.x(), -1, 1), clamp(rhs.y() - lhs.y(), -1, 1)};
+
+            Point p = lhs;
+            do
+            {
+                result.insert(p);
+                p += dir;
+            } while (p != rhs);
+        }
+
+        return {dist[end_turtle], result};
+    }
+
+private:
+    Turtle dijkstra()
+    {
+        if (dist.size() > 0)
+        {
+            return end_turtle;
+        }
+
+        // pq is a min-queue - smallest element first.
+        // pairs compare lexicographically, so weight comes first.
+        priority_queue<pair<size_t, Turtle>, vector<pair<size_t, Turtle>>, greater<>> pq;
+
+        dist.reserve(edges.size() * 4);
+        for (const auto& [p, _] : edges)
+        {
+            for (const auto& d : Dir::CARDINALS)
+            {
+                dist[{p, d}] = numeric_limits<size_t>::max();
+            }
+        }
+
+        pq.push({0, {start, Dir::RIGHT}});
+        dist[{start, Dir::RIGHT}] = 0;
+
+        while (!pq.empty())
+        {
+            auto [w, p] = pq.top();
+            pq.pop();
+
+            for (const auto& edge : edges.at(p.position()))
+            {
+                int turns = 0;
+                bool dx = p.direction().x() != edge.dir.x();
+                bool dy = p.direction().y() != edge.dir.y();
+                if (dx && dy)
+                {
+                    turns = 1;
+                }
+                else if (dx || dy)
+                {
+                    turns = 2;
+                }
+
+                size_t alt = dist[p] + edge.length + (turns * 1000);
+                if (alt == dist[{edge.to, edge.dir}])
+                {
+                    prev[{edge.to, edge.dir}].push_back(p);
+                }
+                else if (alt < dist[{edge.to, edge.dir}])
+                {
+                    dist[{edge.to, edge.dir}] = alt;
+                    prev[{edge.to, edge.dir}] = {p};
+                    pq.push({alt, {edge.to, edge.dir}});
+                }
+            }
+        }
+
+        size_t cost = numeric_limits<size_t>::max();
+        for (const auto& [d, c] : dist)
+        {
+            if (d.position() != end)
             {
                 continue;
             }
 
-            int weight = 1;
-
-            Point new_p = n;
-            while (can_go_straight(new_p, d) && !can_move_to_side(new_p, d))
+            if (c < cost)
             {
-                weight++;
-                new_p += d;
-            }
-
-            graph[cur].push_back(Edge{cur, new_p, d, weight});
-            q.push_back(new_p);
-        }
-    }
-
-    return {start, end, graph, board};
-}
-
-pair<size_t, vector<Edge>> find_shortest_path(const unordered_map<Point, vector<Edge>>& graph, Point start, Point end)
-{
-    // pq is a min-queue - smallest element first.
-    priority_queue<pair<size_t, Turtle>, vector<pair<size_t, Turtle>>, greater<>> pq;
-    unordered_map<Turtle, size_t> dist;
-    unordered_map<Turtle, Turtle> prev;
-
-    for (const auto& [p, _] : graph)
-    {
-        for (const auto& d : Dir::CARDINALS)
-        {
-            dist[{p, d}] = numeric_limits<size_t>::max();
-        }
-        dist[{p, Dir::RIGHT}] = numeric_limits<size_t>::max();
-    }
-
-    pq.push({0, {start, Dir::RIGHT}});
-    dist[{start, Dir::RIGHT}] = 0;
-
-    while (!pq.empty())
-    {
-        auto [w, p] = pq.top();
-        pq.pop();
-
-        for (const auto& edge : graph.at(p.position()))
-        {
-            int turns = 0;
-            bool dx = p.direction().x() != edge.dir.x();
-            bool dy = p.direction().y() != edge.dir.y();
-            if (dx && dy)
-            {
-                turns = 1;
-            }
-            else if (dx || dy)
-            {
-                turns = 2;
-            }
-
-            size_t alt = dist[p] + edge.length + (turns * 1000);
-            if (alt < dist[{edge.to, edge.dir}])
-            {
-                dist[{edge.to, edge.dir}] = alt;
-                prev[{edge.to, edge.dir}] = p;
-                pq.push({alt, {edge.to, edge.dir}});
+                end_turtle = d;
+                cost = c;
             }
         }
-    }
 
-    Turtle endTurtle;
-    size_t cost = numeric_limits<size_t>::max();
-    for (const auto& [d, c] : dist)
-    {
-        if (d.position() != end)
+        if (cost == numeric_limits<size_t>::max())
         {
-            continue;
+            throw logic_error{"no path found"};
         }
 
-        if (c < cost)
-        {
-            endTurtle = d;
-            cost = c;
-        }
+        return end_turtle;
     }
-
-    if (cost == numeric_limits<size_t>::max())
-    {
-        throw logic_error{"wtf man"};
-    }
-
-    vector<Edge> path;
-    Turtle to = endTurtle;
-    while (to.position() != start)
-    {
-        Turtle from = prev[to];
-        for (const auto& edge : graph.at(from.position()))
-        {
-            if (edge.to == to.position())
-            {
-                path.push_back(edge);
-                to = from;
-                break;
-            }
-        }
-    }
-
-    reverse(path.begin(), path.end());
-
-    for (const auto& edge : path)
-    {
-        dbg() << edge.from << " -> " << edge.to << " (" << dist[{edge.to, edge.dir}] << ")" << endl;
-    }
-
-    return {dist[endTurtle], path};
-}
-
-pair<size_t, unordered_set<Point>> find_all_shortest_paths(const unordered_map<Point, vector<Edge>>& graph, Point start, Point end)
-{
-    // pq is a min-queue - smallest element first.
-    priority_queue<pair<size_t, Turtle>, vector<pair<size_t, Turtle>>, greater<>> pq;
-    unordered_map<Turtle, size_t> dist;
-    unordered_map<Turtle, unordered_set<Turtle>> prev;
-
-    for (const auto& [p, _] : graph)
-    {
-        for (const auto& d : Dir::CARDINALS)
-        {
-            dist[{p, d}] = numeric_limits<size_t>::max();
-        }
-        dist[{p, Dir::RIGHT}] = numeric_limits<size_t>::max();
-    }
-
-    pq.push({0, {start, Dir::RIGHT}});
-    dist[{start, Dir::RIGHT}] = 0;
-
-    while (!pq.empty())
-    {
-        auto [w, p] = pq.top();
-        pq.pop();
-
-        for (const auto& edge : graph.at(p.position()))
-        {
-            int turns = 0;
-            bool dx = p.direction().x() != edge.dir.x();
-            bool dy = p.direction().y() != edge.dir.y();
-            if (dx && dy)
-            {
-                turns = 1;
-            }
-            else if (dx || dy)
-            {
-                turns = 2;
-            }
-
-            size_t alt = dist[p] + edge.length + (turns * 1000);
-            if (alt == dist[{edge.to, edge.dir}])
-            {
-                prev[{edge.to, edge.dir}].insert(p);
-            }
-            else if (alt < dist[{edge.to, edge.dir}])
-            {
-                dist[{edge.to, edge.dir}] = alt;
-                prev[{edge.to, edge.dir}] = unordered_set<Turtle>{p};
-                pq.push({alt, {edge.to, edge.dir}});
-            }
-        }
-    }
-
-
-    Turtle endTurtle;
-    size_t cost = numeric_limits<size_t>::max();
-    for (const auto& [d, c] : dist)
-    {
-        if (d.position() != end)
-        {
-            continue;
-        }
-
-        if (c < cost)
-        {
-            endTurtle = d;
-            cost = c;
-        }
-    }
-
-    if (cost == numeric_limits<size_t>::max())
-    {
-        throw logic_error{"wtf man"};
-    }
-
-    unordered_set<Point> result;
-    deque<Turtle> q{endTurtle};
-
-    vector<pair<Point, Point>> edges;
-    while (!q.empty())
-    {
-        Turtle cur = q.front();
-        q.pop_front();
-
-        result.insert(cur.position());
-        for (auto& t : prev[cur])
-        {
-            edges.push_back({cur.position(), t.position()});
-            q.push_back(t);
-        }
-    }
-
-    for (const auto& [lhs, rhs] : edges)
-    {
-        Point dir{clamp(rhs.x() - lhs.x(), -1, 1), clamp(rhs.y() - lhs.y(), -1, 1)};
-
-        Point p = lhs;
-        do
-        {
-            result.insert(p);
-            p += dir;
-        } while (p != rhs);
-    }
-
-    return {dist[endTurtle], result};
-}
+};
 
 } // namespace
 
 string PartOne::solve()
 {
     auto board = read_board();
-    auto graph = build_graph(board);
+    Graph graph(board);
 
-    auto dij = find_shortest_path(graph.edges, graph.start, graph.end);
+    auto dij = graph.find_shortest_path();
 
     unordered_set<Point> path;
     for (auto edge : dij.second)
@@ -421,9 +370,9 @@ string PartOne::solve()
 string PartTwo::solve()
 {
     auto board = read_board();
-    auto graph = build_graph(board);
+    Graph graph(board);
 
-    auto [cost, points] = find_all_shortest_paths(graph.edges, graph.start, graph.end);
+    auto [cost, points] = graph.find_all_shortest_path_points();
 
     graph.draw(dbg(), points);
 
