@@ -23,7 +23,7 @@ namespace
 {
 
 constexpr const char* kInputFile = "day@NUMBER@/day@NUMBER@.input";
-constexpr const char* kTestInput = "TODO";
+constexpr const char* kTestInput = R"(TODO)";
 
 [[maybe_unused]]
 unique_ptr<istream> get_input()
