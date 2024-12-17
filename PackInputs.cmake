@@ -30,7 +30,7 @@ endif()
 file(GLOB_RECURSE INPUTS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" *.input)
 
 # Ignore input files in build directories
-list(FILTER INPUTS EXCLUDE REGEX "build(-vsc)?/")
+list(FILTER INPUTS EXCLUDE REGEX "build.*/")
 
 file(
     ARCHIVE_CREATE
