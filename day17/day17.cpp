@@ -422,6 +422,7 @@ string PartTwo::solve()
                 auto a = maybe + i;
 
                 // This is the part that's specific to my input.
+                // Algebra FTW!
                 auto b = (a & 0x7) ^ 6;
                 b = ((b ^ (a >> b)) ^ 7) & 0x7;
 
