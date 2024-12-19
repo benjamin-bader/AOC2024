@@ -7,6 +7,7 @@
 #include <iostream>
 #include <ranges>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 template <typename T>
@@ -112,20 +113,35 @@ public:
             | std::views::transform([point](Point dir) { return point + dir; })
             | std::views::filter([this](Point p) { return in_bounds(p); });
     }
+
+    template <typename R>
+    void draw(std::ostream& out, const R& marks) const
+    {
+        std::unordered_set<Point> mark_set{std::begin(marks), std::end(marks)};
+        for (int y = 0; y < num_rows(); ++y)
+        {
+            for (int x = 0; x < num_cols(); ++x)
+            {
+                Point p{x, y};
+                if (mark_set.contains(p))
+                {
+                    out << 'O';
+                }
+                else
+                {
+                    out << at(p);
+                }
+            }
+            out << '\n';
+        }
+    }
 };
 
 template <typename T>
 std::ostream& operator<<(std::ostream& out, const BasicBoard<T>& board)
 {
-    for (int y = 0; y < board.num_rows(); ++y)
-    {
-        for (int x = 0; x < board.num_cols(); ++x)
-        {
-            out << board.contents_[y][x];
-        }
-        out << '\n';
-    }
-
+    static const std::array<Point, 0> no_marks;
+    board.draw(out, no_marks);
     return out;
 }
 

@@ -33,6 +33,11 @@ public:
         return y_;
     }
 
+    constexpr int manhattan_distance(const BasicPoint& other) const
+    {
+        return std::abs(x_ - other.x_) + std::abs(y_ - other.y_);
+    }
+
     constexpr BasicPoint operator+(const BasicPoint& other) const
     {
         return {x_ + other.x_, y_ + other.y_};
