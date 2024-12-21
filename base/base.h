@@ -19,6 +19,11 @@ enum class LogLevel
 
 std::ostream& dbg(LogLevel level = LogLevel::INFO);
 
+constexpr std::size_t operator "" _z(unsigned long long n)
+{
+    return static_cast<std::size_t>(n);
+}
+
 class Problem
 {
 public:

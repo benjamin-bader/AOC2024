@@ -4,6 +4,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <tuple>
@@ -98,6 +99,21 @@ Parser<TIn, TOut> Compose(Parser<TIn, TMiddle> p1, Parser<TMiddle, TOut> p2)
         TMiddle middle = p1(in);
         return p2(middle);
     };
+}
+
+inline ::Board Board(std::istream& in)
+{
+    std::vector<std::vector<char>> contents;
+    for (const auto& line : Lines(in))
+    {
+        contents.push_back(Chars(line));
+    }
+    return {std::move(contents)};
+}
+
+inline ::Board Board(const std::unique_ptr<std::istream>& in)
+{
+    return Board(*in);
 }
 
 } // namespace parsers
