@@ -200,7 +200,7 @@ public:
 
     pair<size_t, vector<Edge>> find_shortest_path()
     {
-        auto end_turtle = dijkstra();
+        dijkstra();
 
         vector<Edge> path;
         Turtle to = end_turtle;
@@ -230,12 +230,12 @@ public:
 
     pair<size_t, unordered_set<Point>> find_all_shortest_path_points()
     {
-        auto end_turtle = dijkstra();
+        dijkstra();
 
         unordered_set<Point> result;
         deque<Turtle> q{end_turtle};
 
-        vector<pair<Point, Point>> edges;
+        vector<pair<Point, Point>> found_edges;
         while (!q.empty())
         {
             Turtle cur = q.front();
@@ -244,12 +244,12 @@ public:
             result.insert(cur.position());
             for (auto& t : prev[cur])
             {
-                edges.push_back({cur.position(), t.position()});
+                found_edges.push_back({cur.position(), t.position()});
                 q.push_back(t);
             }
         }
 
-        for (const auto& [lhs, rhs] : edges)
+        for (const auto& [lhs, rhs] : found_edges)
         {
             Point dir{clamp(rhs.x() - lhs.x(), -1, 1), clamp(rhs.y() - lhs.y(), -1, 1)};
 

@@ -388,7 +388,7 @@ string PartTwo::solve()
     stringstream ss;
     Computer computer = read_input(ss);
 
-    auto expected = computer.instructions();
+    auto instructions = computer.instructions();
     set<int64_t> candidates{0};
 
     // from analyzing the input instruction, each loop's output depends only
@@ -403,7 +403,7 @@ string PartTwo::solve()
     // number.  Then for each candidate, shift it left three bits, and for each
     // of the 8 possible values, check if it produces the next output number.
     // so on, so forth.
-    for (auto it = expected.rbegin(); it != expected.rend(); ++it)
+    for (auto it = instructions.rbegin(); it != instructions.rend(); ++it)
     {
         dbg() << "next=" << *it << "; candidates: ";
         for (const int64_t& candidate : candidates)
