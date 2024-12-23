@@ -24,6 +24,11 @@ constexpr std::size_t operator "" _z(unsigned long long n)
     return static_cast<std::size_t>(n);
 }
 
+constexpr std::uintmax_t operator "" _um(unsigned long long n)
+{
+    return static_cast<std::uintmax_t>(n);
+}
+
 std::size_t stoz(const std::string& str);
 
 class Problem

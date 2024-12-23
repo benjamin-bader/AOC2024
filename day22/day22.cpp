@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <exception>
+#include <execution>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -38,16 +39,25 @@ class Buffer
     uint32_t packed_;
 
 public:
-    Buffer()
+    constexpr Buffer()
         : packed_{0}
     {}
+
+    constexpr Buffer(int a, int b, int c, int d)
+        : packed_{0}
+    {
+        push(a);
+        push(b);
+        push(c);
+        push(d);
+    }
 
     int operator[](size_t i) const
     {
         return this->at(i);
     }
 
-    int at(size_t i) const
+    constexpr int at(size_t i) const
     {
         assert(i < 4);
         int shift = 8 * (3 - static_cast<int>(i));
@@ -55,12 +65,12 @@ public:
         // return data_[(pos_ + i) & 0x3];
     }
 
-    void push(int val)
+    constexpr void push(int val)
     {
         packed_ = ((packed_ << 8) | (static_cast<uint32_t>(static_cast<int8_t>(val)) & 0xFF));
     }
 
-    uint32_t pack() const
+    constexpr uint32_t pack() const
     {
         return packed_;
     }
@@ -74,28 +84,23 @@ public:
             static_cast<int8_t>(packed_ & 0xFF)
         };
     }
-};
 
-[[maybe_unused]]
-ostream& operator<<(ostream& os, const Buffer& buffer)
-{
-    os << buffer.at(0) << ", " << buffer.at(1) << ", " << buffer.at(2) << ", " << buffer.at(3);
-    os << " (packed: " << std::hex << buffer.pack() << std::dec << ")";
-    return os;
-}
-
-bool operator==(const Buffer& lhs, const Buffer& rhs)
-{
-    return lhs.pack() == rhs.pack();
-}
-
-struct BufferHash
-{
-    size_t operator()(const Buffer& buf) const
+    constexpr size_t to_index() const
     {
-        return static_cast<size_t>(buf.pack());
+        return static_cast<size_t>(
+                ((at(0) + 9) << 15) +
+                ((at(1) + 9) << 10) +
+                ((at(2) + 9) << 5) +
+                 (at(3) + 9)
+            );
     }
 };
+
+constexpr const Buffer kMaxBuffer(9, 9, 9, 9);
+constexpr const size_t kMaxIndex = kMaxBuffer.to_index() + 1;
+
+using SeenArray = std::array<bool, kMaxIndex>;
+using PriceArray = std::array<int, kMaxIndex>;
 
 class Buyer
 {
@@ -117,56 +122,46 @@ public:
         return s;
     }
 
-    void find_best_price(size_t max_iters, unordered_map<Buffer, long long, BufferHash>& prices_by_prefix) const
+    [[maybe_unused]]
+    void find_best_prefixes(size_t max_iters, SeenArray& seen, PriceArray& prices) const
     {
-        unordered_set<Buffer, BufferHash> seen_prefixes;
-
         Buffer buf;
         size_t s = secret_;
-        int price = static_cast<size_t>(s % 10);
+        int price = static_cast<int>(s % 10);
+
+        fill(seen.begin(), seen.end(), false);
 
         for (size_t i = 0; i < max_iters; ++i)
         {
             mix(s);
-            int new_price = static_cast<size_t>(s % 10);
+            int new_price = static_cast<int>(s % 10);
 
             int delta = new_price - price;
             buf.push(delta);
             price = new_price;
 
-            if (i++ < 3)
+            if (i < 3)
             {
                 // Dont' have enough deltas to make a prefix yet
                 continue;
             }
 
-            if (auto [_, inserted] = seen_prefixes.insert(buf); inserted)
+            if (!seen[buf.to_index()])
             {
-                // only the first time we see this prefix counts
-                prices_by_prefix[buf] += new_price;
+                seen[buf.to_index()] = true;
+                prices[buf.to_index()] += price;
             }
         }
     }
 
 private:
-    int initial_price() const
-    {
-        return static_cast<int>(secret_ % 10);
-    }
-
     static constexpr void mix(size_t& s)
     {
-        s = (s ^ (s << 6)) & 16777215;
-        s = (s ^ (s >> 5)) & 16777215;
-        s = (s ^ (s << 11)) & 16777215;
+        s = (s ^ (s <<  6)) & 0xFFFFFF;
+        s = (s ^ (s >>  5)) & 0xFFFFFF;
+        s = (s ^ (s << 11)) & 0xFFFFFF;
     }
 };
-
-ostream& operator<<(ostream& os, const Buyer& buyer)
-{
-    os << buyer.iter(0);
-    return os;
-}
 
 /*
 
@@ -214,14 +209,13 @@ string PartOne::solve()
 {
     auto buyers = read_input();
     auto sum = transform_reduce(
+        //execution::par_unseq,
         buyers.begin(),
         buyers.end(),
-        0ull,
+        0_um,
         plus{},
         [](const Buyer& buyer) {
-            auto sz = buyer.iter(2000);
-            dbg() << "buyer=" << buyer << "; sz=" << sz << endl;
-            return sz;
+            return static_cast<uintmax_t>(buyer.iter(2000));
         }
     );
     return to_string(sum);
@@ -232,19 +226,17 @@ string PartTwo::solve()
     size_t num_iters = 2000;
     auto buyers = read_input();
 
-    unordered_map<Buffer, long long, BufferHash> sums_by_prefix;
-    sums_by_prefix.reserve(buyers.size() * num_iters);
+    unique_ptr<SeenArray> seen_prefixes = make_unique<SeenArray>();
+    unique_ptr<PriceArray> prices_by_prefix = make_unique<PriceArray>();
+
+    fill(prices_by_prefix->begin(), prices_by_prefix->end(), 0);
 
     for (const auto& buyer : buyers)
     {
-        buyer.find_best_price(num_iters, sums_by_prefix);
+        buyer.find_best_prefixes(num_iters, *seen_prefixes, *prices_by_prefix);
     }
 
-    long long best_price = 0;
-    for (auto& [prefix, price] : sums_by_prefix)
-    {
-        best_price = max(price, best_price);
-    }
+    auto best_price = *max_element(prices_by_prefix->begin(), prices_by_prefix->end());
 
     dbg() << "best price: " << best_price << endl;
 
