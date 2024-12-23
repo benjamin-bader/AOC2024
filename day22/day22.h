@@ -9,7 +9,7 @@ namespace day22
 
 struct PartOne : Problem
 {
-    // static constexpr const char* expected = "TODO";
+    static constexpr const char* expected = "14273043166";
 
     std::string solve() override;
 };
