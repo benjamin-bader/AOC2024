@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <exception>
 #include <fstream>
-#include <generator>
 #include <iostream>
 #include <memory>
 #include <numeric>
@@ -113,25 +112,9 @@ public:
         size_t s = secret_;
         for (size_t i = 0; i < num_iters; ++i)
         {
-            s = (s ^ (s << 6)) & 16777215;
-            s = (s ^ (s >> 5)) & 16777215;
-            s = (s ^ (s << 11)) & 16777215;
+            mix(s);
         }
         return s;
-    }
-
-    generator<int> sequence(size_t num_iters) const
-    {
-        size_t s = secret_;
-
-        for (size_t i = 0; i < num_iters; ++i)
-        {
-            s = (s ^ (s << 6)) & 16777215;
-            s = (s ^ (s >> 5)) & 16777215;
-            s = (s ^ (s << 11)) & 16777215;
-
-            co_yield static_cast<int>(s % 10);
-        }
     }
 
     void find_best_price(size_t max_iters, unordered_map<Buffer, long long, BufferHash>& prices_by_prefix) const
@@ -139,15 +122,19 @@ public:
         unordered_set<Buffer, BufferHash> seen_prefixes;
 
         Buffer buf;
-        size_t i = 0;
-        int price = initial_price();
-        for (int new_price : sequence(max_iters))
+        size_t s = secret_;
+        int price = static_cast<size_t>(s % 10);
+
+        for (size_t i = 0; i < max_iters; ++i)
         {
+            mix(s);
+            int new_price = static_cast<size_t>(s % 10);
+
             int delta = new_price - price;
             buf.push(delta);
             price = new_price;
 
-            if (i++ < 4)
+            if (i++ < 3)
             {
                 // Dont' have enough deltas to make a prefix yet
                 continue;
@@ -165,6 +152,13 @@ private:
     int initial_price() const
     {
         return static_cast<int>(secret_ % 10);
+    }
+
+    static constexpr void mix(size_t& s)
+    {
+        s = (s ^ (s << 6)) & 16777215;
+        s = (s ^ (s >> 5)) & 16777215;
+        s = (s ^ (s << 11)) & 16777215;
     }
 };
 
@@ -206,7 +200,7 @@ vector<Buyer> read_input()
     auto input = get_input();
     vector<Buyer> buyers;
 
-    for (size_t line : parsers::Lines(*input, [](const auto& str) { return stoull(str); } ))
+    for (size_t line : parsers::Lines(*input, stoz))
     {
         buyers.emplace_back(line);
     }

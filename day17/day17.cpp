@@ -214,7 +214,7 @@ private:
         }
         else
         {
-            ip = get_literal(ip + 1);
+            ip = static_cast<size_t>(get_literal(ip + 1));
         }
     }
 

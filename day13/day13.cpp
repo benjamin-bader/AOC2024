@@ -133,7 +133,7 @@ vector<System> read_input()
     return systems;
 }
 
-size_t count_min_tokens(int64_t xy_offset = 0)
+uintmax_t count_min_tokens(int64_t xy_offset = 0)
 {
     auto systems = read_input();
     if (xy_offset > 0)
@@ -145,7 +145,7 @@ size_t count_min_tokens(int64_t xy_offset = 0)
         }
     }
 
-    size_t sum = 0;
+    uintmax_t sum = 0;
     for (const auto& system : systems) {
         const Point64& a = system.button_a;
         const Point64& b = system.button_b;
@@ -198,12 +198,12 @@ size_t count_min_tokens(int64_t xy_offset = 0)
         if (valid_solution)
         {
             // Per the puzzle statement, pressing A costs three tokens and B costs one.
-            size_t cost_a = 3;
-            size_t cost_b = 1;
+            uintmax_t cost_a = 3;
+            uintmax_t cost_b = 1;
 
             assert(m >= 0);
             assert(n >= 0);
-            sum += (static_cast<size_t>(m) * cost_a) + (static_cast<size_t>(n) * cost_b);
+            sum += (static_cast<uintmax_t>(m) * cost_a) + (static_cast<uintmax_t>(n) * cost_b);
         }
     }
     return sum;

@@ -284,7 +284,7 @@ string PartOne::solve()
     for (const auto& code : puzzle->codes())
     {
         string code_copy = code.substr(0, code.size() - 1); // remove final 'A'
-        size_t code_number = stoull(code_copy);
+        size_t code_number = stoz(code_copy);
         size_t code_cost = puzzle->cost_of_code(code, num_dirpads);
         dbg() << "code=" << code << "; code_number=" << code_number << "; code_cost=" << code_cost << endl;
         total_cost += code_cost * code_number;
@@ -301,7 +301,7 @@ string PartTwo::solve()
     for (const auto& code : puzzle->codes())
     {
         string code_copy = code.substr(0, code.size() - 1); // remove final 'A'
-        size_t code_number = stoull(code_copy);
+        size_t code_number = stoz(code_copy);
         size_t code_cost = puzzle->cost_of_code(code, num_dirpads);
         dbg() << "code=" << code << "; code_number=" << code_number << "; code_cost=" << code_cost << endl;
         total_cost += code_cost * code_number;

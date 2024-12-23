@@ -27,7 +27,7 @@ namespace
 constexpr const char* kInputFile = "day11/day11.input";
 constexpr const char* kTestInput = "125 17";
 
-using Stone = uint64_t;
+using Stone = uintmax_t;
 
 int count_digits(Stone num)
 {
@@ -42,7 +42,7 @@ int count_digits(Stone num)
 
 struct Hash
 {
-    size_t operator()(const tuple<Stone, size_t>& t) const
+    size_t operator()(const tuple<Stone, uintmax_t>& t) const
     {
         size_t seed = 1;
         hash_combine(seed, get<0>(t));
@@ -51,11 +51,11 @@ struct Hash
     }
 };
 
-using BlinkCache = unordered_map<tuple<Stone, size_t>, size_t, Hash>;
+using BlinkCache = unordered_map<tuple<Stone, uintmax_t>, uintmax_t, Hash>;
 
-size_t blink(Stone s, size_t num_blinks_remaining, BlinkCache& cache)
+uintmax_t blink(Stone s, uintmax_t num_blinks_remaining, BlinkCache& cache)
 {
-    tuple<Stone, size_t> key{s, num_blinks_remaining};
+    tuple<Stone, uintmax_t> key{s, num_blinks_remaining};
     if (auto it = cache.find(key); it != cache.end())
     {
         return it->second;
@@ -69,7 +69,7 @@ size_t blink(Stone s, size_t num_blinks_remaining, BlinkCache& cache)
 
     if (s == 0)
     {
-        size_t result = blink(1, num_blinks_remaining - 1, cache);
+        uintmax_t result = blink(1, num_blinks_remaining - 1, cache);
         return cache[key] = result;
     }
 
@@ -116,12 +116,12 @@ string PartOne::solve()
 {
     auto stones = read_stones();
 
-    size_t num_blinks = 25;
+    uintmax_t num_blinks = 25;
     BlinkCache cache;
 
-    size_t num_stones = transform_reduce(
+    uintmax_t num_stones = transform_reduce(
         stones.begin(), stones.end(),
-        0ULL,
+        static_cast<uintmax_t>(0),
         plus<>{},
         [&](Stone s) {
             return blink(s, num_blinks, cache);
@@ -135,12 +135,12 @@ string PartTwo::solve()
 {
     auto stones = read_stones();
 
-    size_t num_blinks = 75;
+    uintmax_t num_blinks = 75;
     BlinkCache cache;
 
-    size_t num_stones = transform_reduce(
+    uintmax_t num_stones = transform_reduce(
         stones.begin(), stones.end(),
-        0ULL,
+        static_cast<uintmax_t>(0),
         plus<>{},
         [&](Stone s) {
             return blink(s, num_blinks, cache);

@@ -115,10 +115,10 @@ bool can_form_pattern(const unordered_set<string>& towel_set, const string& patt
 
 class Counter
 {
-    unordered_map<string_view, size_t> counts_;
+    unordered_map<string_view, uintmax_t> counts_;
 
 public:
-    size_t count_combos(const vector<string>& towels, string_view pattern)
+    uintmax_t count_combos(const vector<string>& towels, string_view pattern)
     {
         if (pattern.empty())
         {
@@ -130,7 +130,7 @@ public:
             return it->second;
         }
 
-        size_t num_combos = 0;
+        uintmax_t num_combos = 0;
         for (const auto& towel : towels)
         {
             if (pattern.starts_with(towel))
@@ -166,7 +166,7 @@ string PartTwo::solve()
 {
     Puzzle p = read_input();
 
-    size_t count = 0;
+    uintmax_t count = 0;
     for (const auto& pattern : p.patterns)
     {
         Counter counter;

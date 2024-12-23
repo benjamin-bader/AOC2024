@@ -194,7 +194,7 @@ HardDrive make_from_repr(const string& repr)
 
     size_t num_blocks = accumulate(
         repr.begin(), repr.end(),
-        0ULL,
+        0_z,
         [](size_t acc, char c) { return acc + static_cast<size_t>(c - '0'); }
     );
 

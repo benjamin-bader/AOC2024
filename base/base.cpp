@@ -20,3 +20,8 @@ ostream& dbg(LogLevel level)
         return null_stream;
     }
 }
+
+size_t stoz(const string& str)
+{
+    return static_cast<size_t>(stoull(str));
+}
