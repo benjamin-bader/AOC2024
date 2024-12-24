@@ -4,21 +4,21 @@
 
 #include <string>
 
-namespace day22
+namespace day23
 {
 
 struct PartOne : Problem
 {
-    static constexpr const char* expected = "14273043166";
+    static constexpr const char* expected = "1175";
 
     std::string solve() override;
 };
 
 struct PartTwo : Problem
 {
-    static constexpr const char* expected = "1667";
+    static constexpr const char* expected = "bw,dr,du,ha,mm,ov,pj,qh,tz,uv,vq,wq,xw";
 
     std::string solve() override;
 };
 
-} // namespace day22
+} // namespace day23

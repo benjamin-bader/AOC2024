@@ -231,10 +231,13 @@ string PartTwo::solve()
 
     fill(prices_by_prefix->begin(), prices_by_prefix->end(), 0);
 
-    for (const auto& buyer : buyers)
-    {
-        buyer.find_best_prefixes(num_iters, *seen_prefixes, *prices_by_prefix);
-    }
+    for_each(
+        execution::seq,
+        buyers.begin(), buyers.end(),
+        [&seen_prefixes, &prices_by_prefix, num_iters](const Buyer& buyer) {
+            buyer.find_best_prefixes(num_iters, *seen_prefixes, *prices_by_prefix);
+        }
+    );
 
     auto best_price = *max_element(prices_by_prefix->begin(), prices_by_prefix->end());
 
