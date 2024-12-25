@@ -57,6 +57,8 @@ class Robot
 public:
     Robot() = default;
     Robot(initializer_list<pair<char, initializer_list<pair<char, size_t>>>> costs)
+        : costs_{}
+        , derived_{nullptr}
     {
         for (const auto& row : costs)
         {
