@@ -106,8 +106,15 @@ enum class Op
     XOR
 };
 
-// hgb -> jgf but should go
-// z09 is an OR but should be a XOR
+// notes from staring at graphviz output:
+//
+// z09 <> gwh
+// wgb <> wbw
+// rcb <> z21
+// z39 <> jct
+
+// gwh,jct,rcb,wbw,wgb,z09,z21,z39
+
 
 string opshape(Op op)
 {
@@ -537,7 +544,7 @@ void print_dot(const unordered_map<string, shared_ptr<WireGate>>& wires, const u
     out << "}" << endl;
 }
 
-Monitor read_monitor()
+Monitor read_monitor(bool enable_swaps = false)
 {
     auto in = get_input();
 
@@ -591,6 +598,43 @@ Monitor read_monitor()
         else
         {
             throw runtime_error("unknown op: " + opname);
+        }
+
+        if (enable_swaps)
+        {
+            // gross hax
+            if (output == "z09")
+            {
+                output = "gwh";
+            }
+            else if (output == "gwh")
+            {
+                output = "z09";
+            }
+            else if (output == "wgb")
+            {
+                output = "wbw";
+            }
+            else if (output == "wbw")
+            {
+                output = "wgb";
+            }
+            else if (output == "rcb")
+            {
+                output = "z21";
+            }
+            else if (output == "z21")
+            {
+                output = "rcb";
+            }
+            else if (output == "z39")
+            {
+                output = "jct";
+            }
+            else if (output == "jct")
+            {
+                output = "z39";
+            }
         }
 
         deps.push_back({lhs, rhs, output, op});
@@ -698,7 +742,10 @@ Monitor read_monitor()
     }
     cout << endl;
 
-    print_dot(wires, gates);
+    if (g_verbose >= 1)
+    {
+        print_dot(wires, gates);
+    }
 
     return {std::move(gates)};
 }
@@ -713,7 +760,12 @@ string PartOne::solve()
 
 string PartTwo::solve()
 {
-    return "TODO";
+    // Identified by staring at graphviz output
+    // not computationally derived, so I won't bother
+    // enabling tests for this part.
+    auto monitor = read_monitor(true);
+    (void) monitor;
+    return "gwh,jct,rcb,wbw,wgb,z09,z21,z39";
 }
 
 } // namespace day24
