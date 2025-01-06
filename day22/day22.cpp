@@ -241,7 +241,7 @@ string PartTwo::solve()
 
     auto best_price = *max_element(prices_by_prefix->begin(), prices_by_prefix->end());
 
-    dbg() << "best price: " << best_price << endl;
+    dbg("best price: {}", best_price);
 
     return to_string(best_price);
 }

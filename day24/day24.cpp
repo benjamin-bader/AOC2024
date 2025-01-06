@@ -134,6 +134,17 @@ string opshape(Op op)
     }
 }
 
+auto format_as(Op op)
+{
+    switch (op)
+    {
+        case Op::AND: return "AND";
+        case Op::OR:  return "OR";
+        case Op::XOR: return "XOR";
+        default:      return "???";
+    }
+}
+
 [[maybe_unused]]
 ostream& operator<<(ostream& os, Op op)
 {
@@ -350,7 +361,7 @@ private:
         }
 
         if (faulty)
-            cout << "faulty and node " << name_ << " lhs " << lhs << "(" << inputs_[0]->name() << ") rhs " << rhs << "(" << inputs_[1]->name() << ")" << endl;
+            dbg("faulty AND node {} lhs={} ({}) rhs={} ({})", name_, lhs, inputs_[0]->name(), rhs, inputs_[1]->name());
     }
 
     void check_or(set<string>& faults)
@@ -372,7 +383,7 @@ private:
         }
 
         if (faulty)
-            cout << "faulty or node " << name_ << " lhs " << lhs << "(" << inputs_[0]->name() << ") rhs " << rhs << "(" << inputs_[1]->name() << ")" << endl;
+            dbg("faulty OR node {} lhs={} ({}) rhs={} ({})", name_, lhs, inputs_[0]->name(), rhs, inputs_[1]->name());
     }
 
     void check_xor(set<string>& faults)
@@ -394,7 +405,7 @@ private:
         }
 
         if (faulty)
-            cout << "faulty xor node " << name_ << " lhs " << lhs << "(" << inputs_[0]->name() << ") rhs " << rhs << "(" << inputs_[1]->name() << ")" << endl;
+            dbg("faulty XOR node {} lhs={} ({}) rhs={} ({})", name_, lhs, inputs_[0]->name(), rhs, inputs_[1]->name());
     }
 };
 
@@ -441,18 +452,14 @@ public:
         >>>
         */
         uintmax_t result = 0;
-        dbg() << "0b";
         for (const auto& gate : z_gates_)
         {
-            dbg() << gate->eval();
-
             int shift = stoi(gate->name().substr(1));
             if (gate->eval())
             {
                 result |= (static_cast<uintmax_t>(1) << shift);
             }
         }
-        dbg() << endl;
         return result;
     }
 };
@@ -567,7 +574,7 @@ Monitor read_monitor(bool enable_swaps = false)
 
     for (const auto& [name, wire] : wires)
     {
-        dbg() << "input wire " << name << " = " << wire->eval() << endl;
+        dbg("input wire {} = {}", name, wire->eval());
         if (wire == nullptr)
         {
             throw runtime_error("null wire " + name);
@@ -719,28 +726,15 @@ Monitor read_monitor(bool enable_swaps = false)
     auto z_num = parse_number(z);
     auto expected = x_num + y_num;
 
-    dbg() << "x: " << x_num << endl;
-    dbg() << "y: " << y_num << endl;
-    dbg() << "z: " << z_num << endl;
-    dbg() << "expected: " << expected << endl;
-
-    dbg() << "                7654321076543210765432107654321076543210765432107654321076543210" << endl;
-    dbg() << "----------------------------------------------------" << endl;
-    dbg() << "expected (bin): " << bitset<64>(expected) << endl;
-    dbg() << "actual   (bin): " << bitset<64>(z_num) << endl;
-    dbg() << "diff     (bin): " << bitset<64>(expected ^ z_num) << endl;
-
-    cout << "faults: " << endl;
-    size_t i = 0;
-    for (const auto& fault : faults)
-    {
-        if (i++ > 0)
-        {
-            cout << ",";
-        }
-        cout << fault;
-    }
-    cout << endl;
+    dbg("x: {}", x_num);
+    dbg("y: {}", y_num);
+    dbg("z: {}", z_num);
+    dbg("expected: {}", expected);
+    dbg("                7654321076543210765432107654321076543210765432107654321076543210");
+    dbg("----------------------------------------------------");
+    dbg("expected (bin): {}", bitset<64>(expected));
+    dbg("actual   (bin): {}", bitset<64>(z_num));
+    dbg("diff     (bin): {}", bitset<64>(expected ^ z_num));
 
     if (g_verbose >= 1)
     {

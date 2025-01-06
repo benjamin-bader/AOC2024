@@ -11,13 +11,18 @@
 #include <memory>
 #include <numeric>
 #include <ranges>
-#include <regex>
 #include <sstream>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
+#include <boost/fusion/adapted.hpp>
+#include <boost/phoenix/core.hpp>
+#include <boost/phoenix/object.hpp>
+#include <boost/phoenix/operator.hpp>
+#include <boost/spirit/include/qi.hpp>
 
 using namespace std;
 
@@ -72,61 +77,47 @@ unique_ptr<istream> get_input()
     return make_unique<ifstream>(kInputFile);
 }
 
+namespace phx = boost::phoenix;
+namespace qi = boost::spirit::qi;
+
+template <typename Iter, typename Skipper = qi::blank_type>
+class SystemGrammar : public qi::grammar<Iter, System(), Skipper>
+{
+
+public:
+    SystemGrammar() : SystemGrammar::base_type(start)
+    {
+        using namespace boost::spirit;
+        using qi::int_;
+        using qi::lit;
+        using qi::_val;
+
+        button = (lit("Button ") >> qi::char_ >> lit(": X+") >> int_ >> lit(", Y+") >> int_)[_val = phx::construct<Point64>(qi::_2, qi::_3)];
+        prize = (lit("Prize: X=") >> int_ >> lit(", Y=") >> int_)[_val = phx::construct<Point64>(qi::_1, qi::_2)];
+        start = qi::omit[*qi::space] >> button >> lit("\n") >> button >> lit("\n") >> prize;
+    }
+
+private:
+    qi::rule<Iter, System(), Skipper> start;
+    qi::rule<Iter, Point64(), Skipper> button;
+    qi::rule<Iter, Point64(), Skipper> prize;
+};
+
 vector<System> read_input()
 {
     string line;
     vector<System> systems;
     auto input = get_input();
 
-    regex expr_a{R"(Button A: X\+(\d+), Y\+(\d+))"};
-    regex expr_b{R"(Button B: X\+(\d+), Y\+(\d+))"};
-    regex expr_prize{R"(Prize: X=(\d+), Y=(\d+))"};
+    *input >> ws;
 
-    while (true)
+    boost::spirit::istream_iterator begin{*input >> noskipws};
+    boost::spirit::istream_iterator end;
+
+    SystemGrammar<decltype(begin)> grammar{};
+    System system;
+    while (boost::spirit::qi::phrase_parse(begin, end, grammar, boost::spirit::qi::blank, system))
     {
-        System system;
-
-        smatch sm;
-
-        // chew up whitespace
-        *input >> ws;
-
-        // First button, or EOF
-        if (!getline(*input, line))
-        {
-            break;
-        }
-
-        if (!regex_match(line, sm, expr_a))
-        {
-            throw invalid_argument{"Unexpected line-a input"};;
-        }
-        system.button_a = {stoi(sm[1]), stoi(sm[2])};
-
-        // Second button
-        if (!getline(*input, line))
-        {
-            throw invalid_argument{"Unexpected end of input"};;
-        }
-
-        if (!regex_match(line, sm, expr_b))
-        {
-            throw invalid_argument{"Unexpected line-b input"};;
-        }
-        system.button_b = {stoi(sm[1]), stoi(sm[2])};
-
-        // Prize
-        if (!getline(*input, line))
-        {
-            throw invalid_argument{"Unexpected end of input"};;
-        }
-
-        if (!regex_match(line, sm, expr_prize))
-        {
-            throw invalid_argument{"Unexpected line-prize input"};;
-        }
-        system.prize = {stoi(sm[1]), stoi(sm[2])};
-
         systems.push_back(system);
     }
 
@@ -177,7 +168,7 @@ uintmax_t count_min_tokens(int64_t xy_offset = 0)
         auto det = (a.x() * b.y()) - (a.y() * b.x());
         if (det == 0)
         {
-            dbg() << "whoopsie daisy" << endl;
+            dbg("whoopsie daisy");
             throw invalid_argument{"Determinant is zero"};
         }
 
@@ -193,7 +184,7 @@ uintmax_t count_min_tokens(int64_t xy_offset = 0)
             (m * a.x() + n * b.x() == p.x()) &&
             (m * a.y() + n * b.y() == p.y());
 
-        dbg() << "m: " << m << ", n: " << n << " valid: " << boolalpha << valid_solution << endl;
+        dbg("m: {}, n: {}, valid: {}", m, n, valid_solution);
 
         if (valid_solution)
         {
@@ -222,3 +213,10 @@ string PartTwo::solve()
 }
 
 } // namespace day13
+
+BOOST_FUSION_ADAPT_STRUCT(
+    day13::System,
+    (day13::Point64, button_a)
+    (day13::Point64, button_b)
+    (day13::Point64, prize)
+);

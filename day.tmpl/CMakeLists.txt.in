@@ -1,4 +1,4 @@
 add_library(day@NUMBER@ STATIC day@NUMBER@.h day@NUMBER@.cpp)
-target_link_libraries(day@NUMBER@ PRIVATE base)
+target_link_libraries(day@NUMBER@ PRIVATE base fmt::fmt)
 
 add_warnings(day@NUMBER@)

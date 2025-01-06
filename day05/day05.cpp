@@ -15,6 +15,9 @@
 #include <utility>
 #include <vector>
 
+#include <boost/fusion/include/std_pair.hpp>
+#include <boost/spirit/include/qi.hpp>
+
 using namespace std;
 
 namespace day05
@@ -117,38 +120,20 @@ pair<Rules, vector<Update>> read_input()
 
     auto input = get_input();
 
-    auto lines = parsers::Lines(*input);
-    auto it = lines.begin();
-    while (it != lines.end())
-    {
-        const auto& line = *it++;
-        if (line.empty())
-        {
-            break;
-        }
+    namespace qi = boost::spirit::qi;
 
-        size_t pos = line.find("|");
-        Page before = stoi(line.substr(0, pos));
-        Page after = stoi(line.substr(pos + 1));
-        rules.add_rule(before, after);
+    boost::spirit::istream_iterator start{*input >> noskipws};
+    boost::spirit::istream_iterator stop;
+
+    pair<int, int> rule;
+    while (*input && qi::phrase_parse(start, stop, qi::int_ >> '|' >> qi::int_, qi::space, rule))
+    {
+        rules.add_rule(rule.first, rule.second);
     }
 
-    while (it != lines.end())
+    Update update;
+    while (qi::phrase_parse(start, stop, qi::int_ % ',', qi::space, update))
     {
-        const auto& line = *it++;
-        if (line.empty())
-        {
-            break;
-        }
-
-        Update update;
-        string page_string;
-        stringstream ss(line);
-        while (getline(ss, page_string, ','))
-        {
-            update.push_back(stoi(page_string));
-        }
-
         updates.push_back(std::move(update));
     }
 

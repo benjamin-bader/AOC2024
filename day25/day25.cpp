@@ -139,7 +139,7 @@ public:
 
     size_t count_fitting_pairs() const
     {
-        dbg() << "locks: " << locks_.size() << " keys: " << keys_.size() << endl;
+        dbg("locks: {} keys: {}", locks_.size(), keys_.size());
         unordered_set<pair<LockAndKey, LockAndKey>, LKHash> lock_counts;
 
         for (const auto& lock : locks_)
@@ -148,7 +148,7 @@ public:
             {
                 if (lock.can_fit(key))
                 {
-                    dbg() << "lock " << lock.line() << " fits key " << key.line() << endl;
+                    dbg("lock {} fits key {}", lock.line(), key.line());
                     lock_counts.emplace(lock, key);
                 }
             }

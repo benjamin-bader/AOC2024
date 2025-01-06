@@ -3,10 +3,12 @@
 #include "solutions.h"
 
 #include <exception>
-#include <iostream>
 #include <regex>
 #include <string>
 #include <utility>
+
+#include <fmt/color.h>
+#include <fmt/format.h>
 
 using namespace std;
 
@@ -31,7 +33,7 @@ int main(int argc, char** argv)
         }
         else
         {
-            cerr << "Unknown option: " << argv[1] << endl;
+            fmt::println(stderr, "Unknown option: {}", argv[1]);
             return 1;
         }
 
@@ -47,17 +49,18 @@ int main(int argc, char** argv)
         auto it = solutions.find(key);
         if (it == solutions.end())
         {
-            cerr << "No problem found for day " << day << " part " << part << endl;
+            fmt::println(stderr, "No problem found for day {} part {}", day, part);
             return 1;
         }
 
         try
         {
-            cout << it->second->solve() << endl;
+            fmt::println("{}", it->second->solve());
         }
         catch (const std::exception& e)
         {
-            std::cerr << e.what() << '\n';
+            // use fmt to print to stderr
+            fmt::println(stderr, "Caught exception: {}\n", e.what());
         }
     }
     else
@@ -87,14 +90,12 @@ int main(int argc, char** argv)
 
             bool passed = !did_throw && actual == expected;
 
-            string color = passed ? "\033[32m" : "\033[31m";
             string message = passed ? "[PASS]" : "[FAIL]";
             string clear = "\033[0m";
             string expected_message = " (expected " + expected + ")";
 
             if (g_test_input)
             {
-                color = "\033[33m";
                 message = "[TEST]";
                 expected_message = "";
             }
@@ -104,10 +105,16 @@ int main(int argc, char** argv)
                 fails++;
             }
 
-            cout
-                << color << message << clear
-                << ": Day " << key.first << " Part " << key.second << ": "
-                << actual << expected_message << endl;
+            auto color = g_test_input ? fmt::color::yellow : passed ? fmt::color::green : fmt::color::red;
+
+            fmt::println(
+                "{}: Day {} Part {}: {} {}",
+                fmt::styled(message, fmt::fg(color)),
+                key.first,
+                key.second,
+                actual,
+                expected_message
+            );
         }
 
         return fails;

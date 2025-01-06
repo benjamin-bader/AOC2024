@@ -1,5 +1,6 @@
 #include "day07.h"
 
+#include "numbers.h"
 #include "parsers.h"
 
 #include <algorithm>
@@ -13,6 +14,9 @@
 #include <utility>
 #include <vector>
 #include <version>
+
+#include <boost/fusion/adapted.hpp>
+#include <boost/spirit/include/qi.hpp>
 
 using namespace std;
 
@@ -39,13 +43,15 @@ uintmax_t eval_op(uintmax_t lhs, uintmax_t rhs, OpType op)
         return lhs * rhs;
     case OpType::Concat:
     {
-        uintmax_t tmp = rhs;
-        while (tmp > 0)
-        {
-            lhs *= 10;
-            tmp /= 10;
-        }
-        return lhs + rhs;
+        auto digits = Numbers::count_digits(rhs);
+        return Numbers::shl10(lhs, digits) + rhs;
+        // uintmax_t tmp = rhs;
+        // while (tmp > 0)
+        // {
+        //     lhs *= 10;
+        //     tmp /= 10;
+        // }
+        // return lhs + rhs;
     }
     default:
         throw "Invalid op";
@@ -57,10 +63,9 @@ struct Calibration
     uintmax_t expected;
     vector<uintmax_t> values;
 
-    Calibration(uintmax_t expected, vector<uintmax_t>&& values)
-        : expected(expected), values(std::move(values))
-    {
-    }
+    Calibration() = default;
+    Calibration(const Calibration&) = default;
+    Calibration(Calibration&&) = default;
 
     bool find_valid_ops(int num_ops) const
     {
@@ -140,28 +145,24 @@ unique_ptr<istream> get_input()
     return make_unique<ifstream>(kInputFile);
 }
 
-Calibration parse_calibration(const string& line)
-{
-    size_t pos = line.find(":");
-    uintmax_t expected = stoull(line.substr(0, pos));
-
-    vector<uintmax_t> values;
-    string value_string = line.substr(pos + 2);
-    stringstream ss{value_string};
-
-    uintmax_t value;
-    while (ss >> value)
-    {
-        values.push_back(value);
-    }
-
-    return Calibration(expected, std::move(values));
-}
-
 vector<Calibration> read_input()
 {
     auto input = get_input();
-    return parsers::Lines(*input, parse_calibration);
+    *input >> ws;
+
+    namespace qi = boost::spirit::qi;
+
+    boost::spirit::istream_iterator begin{*input >> noskipws};
+    boost::spirit::istream_iterator end;
+
+    vector<Calibration> calibrations;
+    Calibration calibration;
+    while (qi::phrase_parse(begin, end, ( qi::ulong_long >> ": " >> +qi::ulong_long >> (qi::eol | qi::eoi) ), qi::blank, calibration))
+    {
+        calibrations.push_back(std::move(calibration));
+    }
+
+    return calibrations;
 }
 
 } // namespace
@@ -205,3 +206,5 @@ string PartTwo::solve()
 }
 
 } // namespace day07
+
+BOOST_FUSION_ADAPT_STRUCT(day07::Calibration, expected, values);

@@ -13,6 +13,9 @@ set(BASE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/day.tmpl")
 
 set(OLD_NUMBER "${NUMBER}")
 set(NUMBER "${DAY}")
+if(NOT "${OLD_NUMBER}" STREQUAL "")
+    cmake_language(DEFER CALL set NUMBER "${OLD_NUMBER}")
+endif()
 
 configure_file(
     "${BASE_PATH}/CMakeLists.txt.in"
@@ -35,9 +38,3 @@ configure_file(
 file(TOUCH "${DAY_PATH}/${DAY_NAME}.input")
 
 file(APPEND "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt" "add_day(${DAY_NAME})\n")
-
-if("${OLD_NUMBER}" STREQUAL "")
-    unset(OLD_NUMBER)
-else()
-    set(NUMBER "${OLD_NUMBER}")
-endif()

@@ -7,19 +7,29 @@ project(aoc2024 VERSION 0.1.0 LANGUAGES CXX)
 
 option(SANITIZE "Enable AddressSanitizer" OFF)
 
+include(FetchContent)
+FetchContent_Declare(
+    fmt
+    GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+    GIT_TAG 11.1.1
+)
+FetchContent_MakeAvailable(fmt)
+
+find_package(Boost 1.87 REQUIRED system headers)
+
 macro(add_warnings TARGET)
     target_compile_options(
         "${TARGET}"
         PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
-        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror -Wconversion>
+        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror -Wconversion -Wpessimizing-move>
     )
 endmacro()
 
 add_subdirectory(base)
 
 add_executable(aoc2024 main.cpp)
-target_link_libraries(aoc2024 PRIVATE base)
+target_link_libraries(aoc2024 PRIVATE base fmt::fmt)
 target_sources(aoc2024
     PRIVATE
     FILE_SET HEADERS FILES
