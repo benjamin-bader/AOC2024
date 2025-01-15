@@ -15,7 +15,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(fmt)
 
-find_package(Boost 1.87 REQUIRED system headers)
+find_package(Boost 1.83 REQUIRED system headers)
 
 macro(add_warnings TARGET)
     target_compile_options(
